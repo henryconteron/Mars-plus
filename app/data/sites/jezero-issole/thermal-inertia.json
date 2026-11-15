@@ -1,0 +1,161 @@
+{
+  "retrieved": "2026-11-15",
+  "title": "THEMIS-derived Thermal Inertia of Jezero Crater, Mars",
+  "doi": "10.5281/zenodo.4931348",
+  "url": "https://doi.org/10.5281/zenodo.4931348",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "sourceMd5": "53fec7c990a90629e98c871a7a0da474",
+  "sourceBytes": 1721889,
+  "unit": "J m-2 K-1 s-0.5",
+  "pixelM": 100,
+  "nullValue": 0,
+  "papers": [
+    "Edwards et al. methods as described on the Zenodo record (Edwards et al. 2011, 2018; Piqueux et al. 2019).",
+    "Fergason, R.L., Christensen, P.R. and Kieffer, H.H. (2006). JGR 111, E12004. doi:10.1029/2006JE002735. Thermal inertia ranges used only as a sanity check, not as a walking-speed multiplier."
+  ],
+  "changes": "Cropped to the Issole traverse window. Values rounded to 0.1, which is far below the ~20 unit mosaicking uncertainty stated by the authors. Not resampled onto the 2 m route grid.",
+  "cost": "Display only. No published suited-walking multiplier maps thermal inertia onto time, so the route cost is unchanged.",
+  "bounds": {
+    "west": 77.43776335923465,
+    "east": 77.45463396409278,
+    "north": 18.44800641234899,
+    "south": 18.429448747005065
+  },
+  "width": 10,
+  "height": 11,
+  "values": [
+    [
+      260.0,
+      251.9,
+      256.3,
+      250.0,
+      234.6,
+      249.6,
+      251.7,
+      259.4,
+      251.4,
+      249.6
+    ],
+    [
+      268.7,
+      267.2,
+      255.5,
+      255.4,
+      253.4,
+      239.5,
+      253.9,
+      247.3,
+      243.2,
+      229.6
+    ],
+    [
+      265.6,
+      260.1,
+      270.3,
+      242.2,
+      250.9,
+      239.1,
+      237.6,
+      238.1,
+      235.1,
+      232.5
+    ],
+    [
+      248.5,
+      268.8,
+      269.8,
+      259.9,
+      238.5,
+      234.0,
+      235.1,
+      230.4,
+      228.7,
+      235.1
+    ],
+    [
+      240.5,
+      250.0,
+      265.1,
+      261.2,
+      242.9,
+      235.3,
+      243.2,
+      236.4,
+      233.6,
+      239.8
+    ],
+    [
+      234.1,
+      229.4,
+      248.6,
+      254.3,
+      250.7,
+      242.2,
+      253.1,
+      244.2,
+      223.6,
+      239.3
+    ],
+    [
+      231.0,
+      231.9,
+      235.0,
+      248.8,
+      254.5,
+      254.3,
+      252.4,
+      251.6,
+      224.7,
+      245.8
+    ],
+    [
+      225.8,
+      221.3,
+      217.2,
+      234.6,
+      249.0,
+      257.4,
+      269.4,
+      249.3,
+      240.3,
+      250.0
+    ],
+    [
+      209.3,
+      207.8,
+      218.3,
+      252.5,
+      260.0,
+      262.0,
+      263.6,
+      246.6,
+      237.6,
+      242.7
+    ],
+    [
+      218.2,
+      222.5,
+      220.1,
+      242.7,
+      270.4,
+      273.8,
+      275.7,
+      259.8,
+      246.7,
+      245.0
+    ],
+    [
+      214.7,
+      229.9,
+      219.9,
+      239.0,
+      259.1,
+      276.2,
+      273.5,
+      251.0,
+      246.7,
+      252.0
+    ]
+  ]
+}

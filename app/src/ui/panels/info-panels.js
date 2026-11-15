@@ -47,6 +47,7 @@ const SOURCES = [
   ['HiRISE 1 m DTM & 25 cm orthoimage', 'USGS Astrogeology · Mars 2020 TRN mosaics', 'https://astrogeology.usgs.gov/search/map/mars-sample-return-terrain-relative-navigation-hirise-dtm-mosaic'],
   ['Mars Trek WMTS (HiRISE, CTX, THEMIS)', 'NASA/JPL Solar System Treks', 'https://trek.nasa.gov/mars/'],
   ['MEDA weather (Perseverance)', 'NASA PDS Atmospheres · DOI 10.17189/1522849', 'https://pds-atmospheres.nmsu.edu/data_and_services/atmospheres_data/PERSEVERANCE/meda.html'],
+  ['THEMIS thermal inertia, Jezero', 'Edwards et al. · CC BY 4.0 · DOI 10.5281/zenodo.4931348', 'https://doi.org/10.5281/zenodo.4931348'],
   ['Column dust optical depth, MY24–MY36', 'Montabone et al. 2015 and 2020 · CC BY-SA 3.0', 'https://doi.org/10.1016/j.icarus.2014.12.034'],
   ['Mars Dust Activity Database v1.1', 'Battalio and Wang · CC BY 4.0 · DOI 10.5281/zenodo.7480334', 'https://doi.org/10.5281/zenodo.7480334'],
   ['Mastcam-Z optical depth at Jezero', 'Lemmon · CC BY 4.0 · DOI 10.17632/gktjp9jptb.2', 'https://doi.org/10.1029/2022GL100126'],

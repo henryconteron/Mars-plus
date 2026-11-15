@@ -116,14 +116,14 @@ export function createLeafletMapView(container, { data, assetUrl }) {
       ).addTo(map);
     },
     /** Raster draped on the terrain bounds. labelKey is an i18n key. Replaces a previous raster with the same key. */
-    setRaster(key, labelKey, rgba, width, height, opacity = 0.7) {
+    setRaster(key, labelKey, rgba, width, height, opacity = 0.7, bounds = null) {
       const prev = extras.get(key);
       if (prev) { map.removeLayer(prev.layer); }
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
       canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), width, height), 0, 0);
-      const b = terrainMeta.bounds;
+      const b = bounds || terrainMeta.bounds;
       const layer = L.imageOverlay(canvas.toDataURL('image/png'), [[b.south, b.west], [b.north, b.east]], { opacity, interactive: false });
       layer.on('add', () => { const el = layer.getElement(); if (el) el.style.imageRendering = 'pixelated'; });
       extras.set(key, { labelKey, layer });

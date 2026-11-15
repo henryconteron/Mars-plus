@@ -111,6 +111,7 @@
   "layer.reach": "Ida y vuelta dentro del tiempo de caminata",
   "layer.corridor5": "A lo más 5% sobre el tiempo óptimo",
   "layer.corridor10": "A lo más 10% sobre el tiempo óptimo",
+  "layer.thermal": "Inercia térmica THEMIS, 100 m, solo visual",
   "route.requireLos": "Exigir línea de vista al hábitat",
   "route.colorBudget": "Color según el tiempo que queda del límite",
   "route.colorSegment": "Color según el tiempo del tramo",

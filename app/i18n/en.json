@@ -111,6 +111,7 @@
   "layer.reach": "Round trip inside the walking budget",
   "layer.corridor5": "Within 5% of the optimal time",
   "layer.corridor10": "Within 10% of the optimal time",
+  "layer.thermal": "THEMIS thermal inertia, 100 m, display only",
   "route.requireLos": "Require line of sight to the habitat",
   "route.colorBudget": "Color by time left in the EVA limit",
   "route.colorSegment": "Color by segment time",

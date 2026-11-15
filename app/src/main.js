@@ -126,6 +126,15 @@ async function main() {
   const reachRgba = new Uint8ClampedArray(reach.length * 4);
   for (let i = 0; i < reach.length; i++) if (reach[i]) { reachRgba[i * 4 + 2] = 210; reachRgba[i * 4 + 3] = 90; }
   map.setRaster('reach', 'layer.reach', reachRgba, terrainGrid.cols, terrainGrid.rows, 0.85);
+  const thermal = await fetch('data/sites/jezero-issole/thermal-inertia.json').then((r) => r.json());
+  const thermalRgba = new Uint8ClampedArray(thermal.width * thermal.height * 4);
+  const tiStops = [200, 220, 240, 260, 280];
+  const tiColors = ['#243044', '#2f6f8f', '#7eaa45', '#e0b043', '#d36a2c'];
+  thermal.values.flat().forEach((value, i) => {
+    const rgb = rampColor(tiStops, tiColors, value);
+    thermalRgba[i * 4] = rgb[0]; thermalRgba[i * 4 + 1] = rgb[1]; thermalRgba[i * 4 + 2] = rgb[2]; thermalRgba[i * 4 + 3] = 210;
+  });
+  map.setRaster('thermal', 'layer.thermal', thermalRgba, thermal.width, thermal.height, 0.8, thermal.bounds);
   const paintCorridor = (a, b) => {
     const ca = terrainGrid.cellOf(a.lon, a.lat), cb = terrainGrid.cellOf(b.lon, b.lat);
     const masks = ca >= 0 && cb >= 0 ? corridorMasks(walkModel, ca, cb, [0.05, 0.1]) : [new Uint8Array(terrainGrid.size), new Uint8Array(terrainGrid.size)];
