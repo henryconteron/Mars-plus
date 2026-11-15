@@ -48,14 +48,21 @@ export function reachabilityMask(model, origin, budgetS) {
   return mask;
 }
 
-/** Cells whose via-time is at most (1+factor) times the optimal A→B time. */
-export function corridorMask(model, start, goal, factor) {
+/** One forward and one return field, then a mask per extra-time factor. */
+export function corridorMasks(model, start, goal, factors) {
   const fromStart = timeField(model, start, false);
   const toGoal = timeField(model, goal, true);
   const optimal = fromStart[goal];
-  const mask = new Uint8Array(fromStart.length);
-  if (!Number.isFinite(optimal)) return mask;
-  const limit = optimal * (1 + factor);
-  for (let i = 0; i < fromStart.length; i++) if (fromStart[i] + toGoal[i] <= limit) mask[i] = 1;
-  return mask;
+  return factors.map((factor) => {
+    const mask = new Uint8Array(fromStart.length);
+    if (!Number.isFinite(optimal)) return mask;
+    const limit = optimal * (1 + factor);
+    for (let i = 0; i < fromStart.length; i++) if (fromStart[i] + toGoal[i] <= limit + 1e-6) mask[i] = 1;
+    return mask;
+  });
+}
+
+/** Cells whose via-time is at most (1+factor) times the optimal A→B time. */
+export function corridorMask(model, start, goal, factor) {
+  return corridorMasks(model, start, goal, [factor])[0];
 }

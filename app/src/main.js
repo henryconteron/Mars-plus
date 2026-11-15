@@ -11,7 +11,7 @@ import { ROUGHNESS_SCALES, meanAbsoluteDeviation } from './domain/terrain/roughn
 import { solarPosition, shadowMask } from './domain/terrain/sun.js';
 import { viewshedMask } from './domain/terrain/viewshed.js';
 import { buildCostModel } from './domain/terrain/cost.js';
-import { reachabilityMask } from './domain/routing/time-field.js';
+import { reachabilityMask, corridorMasks } from './domain/routing/time-field.js';
 import { rampColor } from './domain/dust/dust.js';
 import { createI18n } from './ui/i18n.js';
 import { createMissionPanel } from './ui/panels/mission-panel.js';
@@ -126,6 +126,19 @@ async function main() {
   const reachRgba = new Uint8ClampedArray(reach.length * 4);
   for (let i = 0; i < reach.length; i++) if (reach[i]) { reachRgba[i * 4 + 2] = 210; reachRgba[i * 4 + 3] = 90; }
   map.setRaster('reach', 'layer.reach', reachRgba, terrainGrid.cols, terrainGrid.rows, 0.85);
+  const paintCorridor = (a, b) => {
+    const ca = terrainGrid.cellOf(a.lon, a.lat), cb = terrainGrid.cellOf(b.lon, b.lat);
+    const masks = ca >= 0 && cb >= 0 ? corridorMasks(walkModel, ca, cb, [0.05, 0.1]) : [new Uint8Array(terrainGrid.size), new Uint8Array(terrainGrid.size)];
+    const colors = [[230, 190, 40, 80], [230, 120, 30, 120]];
+    ['corridor10', 'corridor5'].forEach((key, k) => {
+      const rgba = new Uint8ClampedArray(masks[k === 0 ? 1 : 0].length * 4);
+      const mask = masks[k === 0 ? 1 : 0];
+      for (let i = 0; i < mask.length; i++) if (mask[i]) {
+        rgba[i * 4] = colors[k][0]; rgba[i * 4 + 1] = colors[k][1]; rgba[i * 4 + 2] = colors[k][2]; rgba[i * 4 + 3] = colors[k][3];
+      }
+      map.setRaster(key, k === 0 ? 'layer.corridor10' : 'layer.corridor5', rgba, terrainGrid.cols, terrainGrid.rows, 0.9);
+    });
+  };
   const firstPlan = service.evaluate(service.defaultPlanOptions());
   store = createStore({
     view: globeView && !pendingLocal ? 'globe' : 'local',
@@ -268,6 +281,7 @@ async function main() {
     if (s.pointB !== last.pointB) map.setPoint('B', s.pointB);
     if (s.userRoute !== last.userRoute || s.routeColor !== last.routeColor || s.planOptions?.limitMin !== last.planOptions?.limitMin) {
       map.showUserRoute(s.userRoute, { mode: s.routeColor || 'budget', limitMin: s.planOptions.limitMin });
+      if (s.userRoute && s.pointA && s.pointB) paintCorridor(s.pointA, s.pointB);
     }
     map.setPickCursor(Boolean(s.pick));
     last = s;

@@ -1,6 +1,6 @@
 import { test, assert, assertClose } from './harness.js';
 import { buildCostModel } from '../app/src/domain/terrain/cost.js';
-import { timeField, reachabilityMask } from '../app/src/domain/routing/time-field.js';
+import { timeField, reachabilityMask, corridorMask } from '../app/src/domain/routing/time-field.js';
 
 function openModel(cols, rows) {
   const z = new Float32Array(cols * rows);
@@ -34,4 +34,14 @@ test('reachability: a zero walking budget keeps only the origin', () => {
   assert(none[2 * 6 + 3] === 0, 'a step costs more than zero');
   const wide = reachabilityMask(model, origin, 1e9);
   assert(wide[2 * 6 + 4] === 1, 'a huge budget covers the interior');
+});
+
+test('corridor: endpoints are inside 5 percent and a blocked goal yields nothing', () => {
+  const model = openModel(8, 5);
+  const start = 2 * 8 + 2, goal = 2 * 8 + 5;
+  const mask = corridorMask(model, start, goal, 0.05);
+  assert(mask[start] === 1 && mask[goal] === 1, 'the endpoints are on the corridor');
+  model.blocked[goal] = 1;
+  const empty = corridorMask(model, start, goal, 0.1);
+  assert(!empty.some((v) => v === 1), 'no route means no corridor');
 });
