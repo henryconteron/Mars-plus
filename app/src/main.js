@@ -10,6 +10,8 @@ import { TerrainGrid } from './domain/terrain/grid.js';
 import { ROUGHNESS_SCALES, meanAbsoluteDeviation } from './domain/terrain/roughness.js';
 import { solarPosition, shadowMask } from './domain/terrain/sun.js';
 import { viewshedMask } from './domain/terrain/viewshed.js';
+import { buildCostModel } from './domain/terrain/cost.js';
+import { reachabilityMask } from './domain/routing/time-field.js';
 import { rampColor } from './domain/dust/dust.js';
 import { createI18n } from './ui/i18n.js';
 import { createMissionPanel } from './ui/panels/mission-panel.js';
@@ -118,6 +120,12 @@ async function main() {
     else { losRgba[i * 4] = 180; losRgba[i * 4 + 3] = 110; }
   }
   map.setRaster('los', 'layer.los', losRgba, terrainGrid.cols, terrainGrid.rows, 0.8);
+  const walkModel = buildCostModel(terrainGrid, data.params);
+  const walkBudgetS = Math.max(0, data.params.eva.limitMin - data.params.eva.airlockMin - data.params.eva.reserveMin) * 60;
+  const reach = habitatCell >= 0 ? reachabilityMask(walkModel, habitatCell, walkBudgetS) : new Uint8Array(terrainGrid.size);
+  const reachRgba = new Uint8ClampedArray(reach.length * 4);
+  for (let i = 0; i < reach.length; i++) if (reach[i]) { reachRgba[i * 4 + 2] = 210; reachRgba[i * 4 + 3] = 90; }
+  map.setRaster('reach', 'layer.reach', reachRgba, terrainGrid.cols, terrainGrid.rows, 0.85);
   const firstPlan = service.evaluate(service.defaultPlanOptions());
   store = createStore({
     view: globeView && !pendingLocal ? 'globe' : 'local',

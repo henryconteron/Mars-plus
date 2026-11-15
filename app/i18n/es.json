@@ -108,6 +108,7 @@
   "layer.rough26": "Rugosidad 26 m, solo visual (la malla no da 25 m)",
   "layer.shadow": "Sombras a la hora elegida",
   "layer.los": "Línea de vista al hábitat",
+  "layer.reach": "Ida y vuelta dentro del tiempo de caminata",
   "route.requireLos": "Exigir línea de vista al hábitat",
   "route.colorBudget": "Color según el tiempo que queda del límite",
   "route.colorSegment": "Color según el tiempo del tramo",
