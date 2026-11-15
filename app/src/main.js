@@ -6,6 +6,9 @@ import { createMissionService } from './application/use-cases.js';
 import { createStaticSiteRepository } from './infrastructure/data/static-site-repository.js';
 import { createWorkerRouteSolver } from './infrastructure/routing/worker-route-solver.js';
 import { createLeafletMapView } from './infrastructure/map/leaflet-map-view.js';
+import { TerrainGrid } from './domain/terrain/grid.js';
+import { ROUGHNESS_SCALES, meanAbsoluteDeviation } from './domain/terrain/roughness.js';
+import { rampColor } from './domain/dust/dust.js';
 import { createI18n } from './ui/i18n.js';
 import { createMissionPanel } from './ui/panels/mission-panel.js';
 import { createRoutePanel } from './ui/panels/route-panel.js';
@@ -77,6 +80,19 @@ async function main() {
   }
 
   const map = createLeafletMapView(document.getElementById('map'), { data, assetUrl: repository.assetUrl });
+  const terrainGrid = new TerrainGrid(data.terrainMeta, await repository.loadTerrainBinary());
+  const roughColors = ['#1c2430', '#2f6f8f', '#e0b043', '#d36a2c', '#f4efe6'];
+  const roughStops = [0, 0.05, 0.15, 0.4, 1];
+  for (const scale of ROUGHNESS_SCALES) {
+    const mad = meanAbsoluteDeviation(terrainGrid.z, terrainGrid.rows, terrainGrid.cols, scale.radius);
+    const rgba = new Uint8ClampedArray(mad.length * 4);
+    for (let i = 0; i < mad.length; i++) {
+      if (!Number.isFinite(mad[i])) continue;
+      const rgb = rampColor(roughStops, roughColors, mad[i]);
+      rgba[i * 4] = rgb[0]; rgba[i * 4 + 1] = rgb[1]; rgba[i * 4 + 2] = rgb[2]; rgba[i * 4 + 3] = 210;
+    }
+    map.setRaster(scale.id, `layer.${scale.id}`, rgba, terrainGrid.cols, terrainGrid.rows, 0.75);
+  }
   const firstPlan = service.evaluate(service.defaultPlanOptions());
   store = createStore({
     view: globeView && !pendingLocal ? 'globe' : 'local',

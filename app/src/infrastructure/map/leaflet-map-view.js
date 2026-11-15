@@ -59,6 +59,7 @@ export function createLeafletMapView(container, { data, assetUrl }) {
   };
   const userPins = { A: null, B: null };
   let control = null;
+  const extras = new Map();
   let clickHandler = null;
   let picking = false;
   let lastT = (k) => k;
@@ -102,11 +103,30 @@ export function createLeafletMapView(container, { data, assetUrl }) {
       markers.sampling.bindPopup(t('point.sampling', ws) + photoOf('sampling'));
       markers.observation.bindPopup(t('point.observation', ws) + photoOf('observation'));
       if (control) control.remove();
+      const overlays = {
+        [t('layer.cost')]: layers.cost, [t('layer.slope')]: layers.slope, [t('layer.geology')]: layers.geology,
+        [t('layer.official')]: layers.official, [t('layer.rover')]: layers.rover, [t('layer.user')]: layers.user,
+      };
+      for (const extra of extras.values()) overlays[t(extra.labelKey)] = extra.layer;
       control = L.control.layers(
         { [t('layer.hirise')]: base.hirise, [t('layer.ctx')]: base.ctx, [t('layer.themis')]: base.themis },
-        { [t('layer.cost')]: layers.cost, [t('layer.slope')]: layers.slope, [t('layer.geology')]: layers.geology, [t('layer.official')]: layers.official, [t('layer.rover')]: layers.rover, [t('layer.user')]: layers.user },
+        overlays,
         { collapsed: true },
       ).addTo(map);
+    },
+    /** Raster draped on the terrain bounds. labelKey is an i18n key. Replaces a previous raster with the same key. */
+    setRaster(key, labelKey, rgba, width, height, opacity = 0.7) {
+      const prev = extras.get(key);
+      if (prev) { map.removeLayer(prev.layer); }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), width, height), 0, 0);
+      const b = terrainMeta.bounds;
+      const layer = L.imageOverlay(canvas.toDataURL('image/png'), [[b.south, b.west], [b.north, b.east]], { opacity, interactive: false });
+      layer.on('add', () => { const el = layer.getElement(); if (el) el.style.imageRendering = 'pixelated'; });
+      extras.set(key, { labelKey, layer });
+      if (control) this.setLabels(lastT);
     },
     showOfficial(resM) {
       layers.official.clearLayers();
