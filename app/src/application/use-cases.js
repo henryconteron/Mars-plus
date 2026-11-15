@@ -2,6 +2,7 @@
 // Use cases. They depend on the domain and on ports, never on the DOM or on Leaflet.
 
 import { evaluatePlans, defaultPlanOptions } from '../domain/plans/evaluate.js';
+import { applyDustAlert } from '../domain/dust/dust.js';
 import { explainEvaluation } from '../domain/explain/explain.js';
 import { withLargeDuneFactor, largeDuneFactor } from '../domain/terrain/params.js';
 
@@ -41,8 +42,9 @@ export function createMissionService({ repository, solver }) {
 
     /** Evaluates every plan x departure through the filter chain and explains the outcome. */
     evaluate(options, legs = this.officialLegs()) {
-      const evaluation = evaluatePlans(planInput(legs), options);
-      return { evaluation, explanation: explainEvaluation(evaluation) };
+      const applied = applyDustAlert(site.params, site.dust?.jezeroTau, options);
+      const evaluation = evaluatePlans(planInput(legs), applied.options);
+      return { evaluation, explanation: explainEvaluation(evaluation), dustInfo: applied.dustInfo };
     },
 
     /** Least-effort route between two points of the pilot area. */

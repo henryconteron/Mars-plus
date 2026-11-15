@@ -224,7 +224,7 @@ Planes A (foto + muestra), C (solo muestra) y B (solo documentación) × horas d
 | **Tormenta de polvo activa** | **Posponer** (filtro 4: visibilidad reducida) |
 | **Evento solar activo** | **Posponer** (filtro 5: permanecer en el refugio) |
 
-**Decisión D13b:** la tormenta se modela como **alerta explícita**. La prueba mostró que la temperatura y el viento de MEDA no bastan: el peligro real fue la opacidad (~2), y ese dato no está en los productos derivados.
+**Decisión D13b:** la tormenta se modela como **alerta explícita**. La prueba mostró que la temperatura y el viento de MEDA no bastan. La opacidad no está en esos productos derivados. La medición que usa el planificador es la de Mastcam-Z (pico 1,38 a 880 nm en los soles 316–317; umbral 1,0). El detalle y las fuentes están en `docs/es/datos-polvo.md`.
 
 ---
 

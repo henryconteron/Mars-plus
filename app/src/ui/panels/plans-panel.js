@@ -15,6 +15,11 @@ export function createPlansPanel(el, { i18n, data, actions }) {
     ctl.scenario = h('select', { onchange: (e) => actions.setOption({ weatherScenario: e.target.value }) },
       ...['typical', 'worst', 'storm'].map((k) => h('option', { value: k, selected: o.weatherScenario === k }, t(`scenario.${k}`))));
     ctl.dust = h('input', { type: 'checkbox', checked: o.dustStormAlert, onchange: (e) => actions.setOption({ dustStormAlert: e.target.checked }) });
+    ctl.sol = h('input', {
+      type: 'number', min: 0, max: 4000, step: 1, value: o.dustSol ?? '', inputmode: 'numeric',
+      'aria-label': t('plans.dustSol'),
+      onchange: (e) => { const raw = e.target.value.trim(); actions.setOption({ dustSol: raw === '' ? null : Number(raw) }); },
+    });
     ctl.solar = h('input', { type: 'checkbox', checked: o.solarEventAlert, onchange: (e) => actions.setOption({ solarEventAlert: e.target.checked }) });
     ctl.limit = h('input', { type: 'number', min: 60, max: 480, step: 5, value: o.limitMin, onchange: (e) => { const v = Number(e.target.value); if (v >= 60 && v <= 480) actions.setOption({ limitMin: v }); } });
     ctl.pace = h('select', { onchange: (e) => actions.setPace(e.target.value) },
@@ -22,11 +27,17 @@ export function createPlansPanel(el, { i18n, data, actions }) {
     verdict = h('div', { class: 'verdict', role: 'status', 'aria-live': 'polite' });
     explainList = h('ul', { class: 'explain' });
     grid = h('table', { class: 'plan-grid' });
+    ctl.dustLabel = document.createTextNode('');
+    ctl.note = h('p', { class: 'note' });
+    ctl.follow = h('button', { type: 'button', class: 'btn', onclick: () => actions.setOption({ dustFollowData: true }) }, t('plans.dustFollow'));
     el.append(
       h('h2', {}, t('plans.title')),
       h('p', { class: 'lead' }, t('plans.lead')),
       h('label', { class: 'field' }, t('plans.scenario'), ctl.scenario),
-      h('label', { class: 'check' }, ctl.dust, t('plans.alertDust')),
+      h('label', { class: 'check' }, ctl.dust, ctl.dustLabel),
+      ctl.note,
+      ctl.follow,
+      h('label', { class: 'field' }, t('plans.dustSol'), ctl.sol),
       h('label', { class: 'check' }, ctl.solar, t('plans.alertSolar')),
       h('div', { class: 'field' }, h('label', {}, t('plans.limit'), ' ', ctl.limit), h('label', {}, t('plans.pace'), ' ', ctl.pace)),
       verdict, explainList,
@@ -68,6 +79,12 @@ export function createPlansPanel(el, { i18n, data, actions }) {
   function update(state) {
     const { t } = i18n;
     const { evaluation, explanation } = state;
+    if (ctl.dust) {
+      ctl.dust.checked = Boolean(state.planOptions.dustStormAlert);
+      ctl.dustLabel.textContent = t(state.planOptions.dustAlertOverride == null ? 'plans.alertDustAuto' : 'plans.alertDustManual');
+      ctl.note.textContent = dustText(i18n, state.dustInfo, data.params);
+      ctl.follow.hidden = state.planOptions.dustAlertOverride == null;
+    }
     updateSensitivity(state);
     if (!evaluation) return;
     const rec = evaluation.recommended;
@@ -94,4 +111,17 @@ export function createPlansPanel(el, { i18n, data, actions }) {
   }
 
   return { build, update };
+}
+
+function dustText(i18n, dust, params) {
+  const { t } = i18n;
+  const threshold = params.dust.alertTau880;
+  if (!dust || dust.tau == null) {
+    if (dust?.basis === 'sol-missing') return t('plans.dustMissing', { sol: dust.sol, threshold });
+    return t('plans.dustUnavailable', { threshold });
+  }
+  const tau = dust.tau.toFixed(2);
+  if (dust.basis === 'sol') return t('plans.dustSolValue', { tau, sol: dust.sol, ls: dust.ls, n: dust.n, threshold });
+  if (dust.basis === 'storm-sols') return t('plans.dustStormValue', { tau, from: params.dust.stormSols[0], to: params.dust.stormSols[1], threshold });
+  return t('plans.dustBackgroundValue', { tau, from: params.dust.backgroundSols[0], to: params.dust.backgroundSols[1], threshold });
 }

@@ -37,18 +37,26 @@ async function main() {
   const viewToggle = document.getElementById('view-toggle');
   let globe = null, globeView = null, store = null, pendingLocal = false;
   const goLocal = () => { if (store) store.set({ view: 'local' }); else pendingLocal = true; };
-  if (new URLSearchParams(location.search).get('view') !== 'local' && isWebGL2Supported()) {
+  const openLocal = new URLSearchParams(location.search).get('view') === 'local';
+  const flatDust = new URLSearchParams(location.search).get('dust') === 'flat';
+  const openDust = new URLSearchParams(location.search).get('layer') === 'dust';
+  if (!openLocal) {
     try {
       const meta = await fetch('assets/globe/globe.json').then((r) => { if (!r.ok) throw new Error(`globe.json: HTTP ${r.status}`); return r.json(); });
+      const webgl = isWebGL2Supported();
       globeRoot.hidden = false;
       loading.hidden = true; // the globe shows its own progress while the EVA data loads underneath
-      globeView = createGlobeView(globeRoot, { i18n, assetBase: 'assets/globe/', meta, onEnterMission: goLocal });
-      globe = createWebGLGlobe(globeView.canvas, { assetBase: 'assets/globe/', meta, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches });
-      globe.start().then(() => globeView.attach(globe)).catch((err) => {
-        console.error(err);
-        globeView.fail('globe.error');
-        setTimeout(goLocal, 1500); // fallback: the EVA map always works without the globe
-      });
+      globeView = createGlobeView(globeRoot, { i18n, assetBase: 'assets/globe/', dustBase: 'data/dust/', meta, onEnterMission: goLocal, preferFlat: flatDust || !webgl });
+      if (webgl) {
+        globe = createWebGLGlobe(globeView.canvas, { assetBase: 'assets/globe/', meta, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches });
+        globe.start().then(() => {
+          globeView.attach(globe);
+          if (openDust && !flatDust) globeView.showDustLayer();
+        }).catch((err) => {
+          console.error(err);
+          globeView.useFlat(); // the dust map still works as a flat Leaflet view
+        });
+      }
     } catch (err) {
       console.error(err);
       globeRoot.hidden = true; globe = null; globeView = null; loading.hidden = false;
@@ -69,13 +77,14 @@ async function main() {
   }
 
   const map = createLeafletMapView(document.getElementById('map'), { data, assetUrl: repository.assetUrl });
-  const planOptions = service.defaultPlanOptions();
+  const firstPlan = service.evaluate(service.defaultPlanOptions());
   store = createStore({
     view: globeView && !pendingLocal ? 'globe' : 'local',
     officialRes: data.routes.primaryResM,
     pick: null, pointA: null, pointB: null,
     routeStatus: { kind: 'idle' }, userRoute: null,
-    paceKey: 'normal', planOptions, ...service.evaluate(planOptions),
+    paceKey: 'normal', planOptions: firstPlan.evaluation.options, dustInfo: firstPlan.dustInfo,
+    evaluation: firstPlan.evaluation, explanation: firstPlan.explanation,
     sensitivity: { status: 'idle', rows: null }, sensitivityView: null, traverseValidation: null, routingReady: false,
   });
 
@@ -109,8 +118,18 @@ async function main() {
       computeIfReady();
     },
     setOption: (patch) => {
-      const planOptionsNext = { ...store.get().planOptions, ...patch };
-      store.set({ planOptions: planOptionsNext, ...service.evaluate(planOptionsNext), sensitivityView: sensitivityView(store.get().sensitivity.rows, planOptionsNext) });
+      const prev = store.get().planOptions;
+      const next = { ...prev, ...patch };
+      if (patch.dustFollowData) next.dustAlertOverride = null;
+      else if (Object.hasOwn(patch, 'dustStormAlert') && !Object.hasOwn(patch, 'dustAlertOverride')) next.dustAlertOverride = patch.dustStormAlert;
+      if (Object.hasOwn(patch, 'weatherScenario') || Object.hasOwn(patch, 'dustSol')) next.dustAlertOverride = null;
+      delete next.dustFollowData;
+      const result = service.evaluate(next);
+      store.set({
+        planOptions: result.evaluation.options, dustInfo: result.dustInfo,
+        evaluation: result.evaluation, explanation: result.explanation,
+        sensitivityView: sensitivityView(store.get().sensitivity.rows, result.evaluation.options),
+      });
     },
     runSensitivity: async () => {
       if (store.get().sensitivity.status === 'running') return;

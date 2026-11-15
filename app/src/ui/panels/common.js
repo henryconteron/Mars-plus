@@ -9,6 +9,9 @@ export function reasonText(i18n, reason) {
   if ('tempC' in v) v.tempC = fmt(v.tempC, 1);
   if ('windMs' in v) v.windMs = fmt(v.windMs, 1);
   if ('doseUGy' in v) v.doseUGy = fmt(v.doseUGy, 0);
+  if (reason.code === 'dustStorm' && Number.isFinite(v.tau)) {
+    return i18n.t('reason.dustStormMeasured', { tau: fmt(v.tau, 2), threshold: fmt(v.threshold, 2) });
+  }
   if ('task' in v) v.task = i18n.t(`task.${v.task}`);
   if ('leg' in v) v.leg = i18n.t(`leg.${v.leg}`);
   return i18n.t(`reason.${reason.code}`, v);
