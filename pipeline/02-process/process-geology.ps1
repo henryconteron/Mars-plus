@@ -14,7 +14,7 @@ Write-Step 'Geology: clipping Stack 2020 shapefile'
 $parts = [Geology]::ClipShapefile((Resolve-RepoPath $repo $raw.geologyShapefile), $x0 - 100, $y0 - $nRows - 100, $x0 + $nCols + 100, $y0 + 100, $marsR).Split('|', 2)
 $clipPath = Resolve-RepoPath $repo $raw.geologyVector
 New-Item -ItemType Directory -Force (Split-Path $clipPath) | Out-Null
-[IO.File]::WriteAllText($clipPath, $parts[1])
+Write-Utf8NoBom $clipPath $parts[1]
 Write-Step "Geology: $($parts[0]) polygons in the area"
 
 Write-Step 'Geology: rasterizing to the 1 m grid'

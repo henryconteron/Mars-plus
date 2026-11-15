@@ -25,5 +25,5 @@ foreach ($file in $files) {
 }
 $outPath = Resolve-RepoPath $repo $raw.radiation
 New-Item -ItemType Directory -Force (Split-Path $outPath) | Out-Null
-$rows | Out-File $outPath -Encoding utf8
+Write-Utf8NoBom $outPath (($rows -join "`r`n") + "`r`n")
 Write-Step "RAD: $($rows.Count - 1) observations"

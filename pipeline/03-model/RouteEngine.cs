@@ -1,4 +1,4 @@
-﻿// MARS+ official route engine (pipeline side). Mirrors app/src/domain/terrain/cost.js and routing/astar.js.
+// MARS+ official route engine (pipeline side). Mirrors app/src/domain/terrain/cost.js and routing/astar.js.
 // Cost of a cell = time to cross it: directional slope (Tobler, scaled), roughness, sand (Stack et al. 2020)
 // and rocks (shadow fraction in 25 cm HiRISE). Blocked: no data, slope > SlopeBlockDeg, rocks > RockBlock.
 // Parameters are injected from config/model-parameters.json (single source of truth).
@@ -13,6 +13,8 @@ public class RouteEngine
     // --- parameters (set from config before constructing) ---
     public static double ToblerFactor = 0.5, SlopeBlockDeg = 20.0, RoughRefM = 0.25;
     public static double LargeDuneExtra = 1.0, SmallDuneExtra = 0.3, RockMult = 6.0, RockBlock = 0.12;
+    // Loaded from config/model-parameters.json before BestWorkspace (no hardcoded fallback).
+    public static double WorkspaceMaxSlopeDeg = double.NaN, WorkspaceMaxLargeDune = double.NaN;
 
     public int NR, NC; public double Res, X0, Y0, R;
     public float[] Z, Slope, Rough, Rock, DuneL, DuneS;
@@ -142,9 +144,12 @@ public class RouteEngine
         return p;
     }
 
-    // Best workspace near (lat,lon): flat (<10 deg), no blocked cells, no large dunes, within radius.
+    // Best workspace near (lat,lon): slope <= WorkspaceMaxSlopeDeg (inclusive), large-dune
+    // fraction <= WorkspaceMaxLargeDune (inclusive), no blocked cells, within radius.
     public int BestWorkspace(double lat, double lon, double radius, double platformRadius, out string why)
     {
+        if (double.IsNaN(WorkspaceMaxSlopeDeg) || double.IsNaN(WorkspaceMaxLargeDune))
+            throw new InvalidOperationException("Workspace thresholds must be loaded from config/model-parameters.json");
         int r0 = Row(lat), c0 = Col(lon), rad = (int)Math.Ceiling(radius / Res), pr = Math.Max(1, (int)Math.Ceiling(platformRadius / Res));
         int best = -1; double bestScore = double.MaxValue; why = "";
         for (int r = r0 - rad; r <= r0 + rad; r++) for (int c = c0 - rad; c <= c0 + rad; c++)
@@ -153,9 +158,9 @@ public class RouteEngine
             double d = Math.Sqrt(Math.Pow((r - r0) * Res, 2) + Math.Pow((c - c0) * Res * CosLat(), 2)); if (d > radius) continue;
             double smax = 0, rk = 0, dl = 0; bool ok = true;
             for (int i = -pr; i <= pr && ok; i++) for (int j = -pr; j <= pr; j++) { int q = (r + i) * NC + c + j; if (Blocked(q)) { ok = false; break; } smax = Math.Max(smax, Slope[q]); rk = Math.Max(rk, Rock[q]); dl = Math.Max(dl, DuneL[q]); }
-            if (!ok || smax > 10 || dl > 0.5) continue;
+            if (!ok || smax > WorkspaceMaxSlopeDeg || dl > WorkspaceMaxLargeDune) continue;
             double score = smax + 50 * rk + 0.5 * d;
-            if (score < bestScore) { bestScore = score; best = r * NC + c; why = "{" + string.Format(IC, "\"maxSlopeDeg\":{0:F1},\"rockFraction\":{1:F3},\"distanceToTargetM\":{2:F1}", smax, rk, d) + "}"; }
+            if (score < bestScore) { bestScore = score; best = r * NC + c; why = "{" + string.Format(IC, "\"maxSlopeDeg\":{0:F1},\"rockFraction\":{1:F3},\"largeDuneFraction\":{2:F3},\"distanceToTargetM\":{3:F1}", smax, rk, dl, d) + "}"; }
         }
         return best;
     }

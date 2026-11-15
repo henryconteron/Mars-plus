@@ -2,6 +2,59 @@
 // RouteSolver implementation backed by a module Web Worker, with a main-thread fallback.
 import { createRouteCore } from './route-core.js';
 
+/**
+ * Promise bridge over a Worker-like object. onerror rejects every in-flight call
+ * and every later call, so a dead worker cannot leave the UI waiting forever.
+ * @param {{postMessage:Function, onmessage:Function|null, onerror:Function|null}} worker
+ */
+export function createWorkerBridge(worker) {
+  let seq = 0;
+  let failed = null;
+  const pending = new Map();
+  const failAll = (err) => {
+    failed = err;
+    for (const p of pending.values()) p.reject(err);
+    pending.clear();
+  };
+  worker.onmessage = (event) => {
+    const data = event && event.data;
+    const p = data && pending.get(data.id);
+    if (!p) return;
+    pending.delete(data.id);
+    p.resolve(data.result);
+  };
+  worker.onerror = (event) => {
+    if (event && typeof event.preventDefault === 'function') event.preventDefault();
+    const message = (event && event.message) || 'Worker failed';
+    failAll(new Error(message));
+  };
+  return {
+    call(type, payload, transfer = []) {
+      if (failed) return Promise.reject(failed);
+      return new Promise((resolve, reject) => {
+        const id = ++seq;
+        pending.set(id, { resolve, reject });
+        try {
+          worker.postMessage({ id, type, payload }, transfer);
+        } catch (err) {
+          pending.delete(id);
+          reject(err);
+        }
+      });
+    },
+  };
+}
+
+function mainThreadSolver() {
+  const core = createRouteCore();
+  return {
+    init: async (m, b, p) => core.init(m, b, p),
+    route: async (a, b) => core.route(a, b),
+    legs: async (legs, params) => core.legs(legs, params),
+    validateTraverse: async (coords) => core.validateTraverse(coords),
+  };
+}
+
 /** @returns {import('../../application/ports.js').RouteSolver} */
 export function createWorkerRouteSolver() {
   let worker = null;
@@ -10,25 +63,12 @@ export function createWorkerRouteSolver() {
   } catch {
     worker = null;
   }
-  if (!worker) {
-    const core = createRouteCore();
-    return {
-      init: async (m, b, p) => core.init(m, b, p),
-      route: async (a, b) => core.route(a, b),
-      legs: async (legs, params) => core.legs(legs, params),
-      validateTraverse: async (coords) => core.validateTraverse(coords),
-    };
-  }
-  let seq = 0;
-  const pending = new Map();
-  worker.onmessage = (e) => { const p = pending.get(e.data.id); if (p) { pending.delete(e.data.id); p(e.data.result); } };
-  const call = (type, payload, transfer = []) => new Promise((resolve) => {
-    const id = ++seq; pending.set(id, resolve); worker.postMessage({ id, type, payload }, transfer);
-  });
+  if (!worker) return mainThreadSolver();
+  const bridge = createWorkerBridge(worker);
   return {
-    async init(meta, buffer, params) { await call('init', { meta, buffer, params }, [buffer]); },
-    route: (a, b) => call('route', { a, b }),
-    legs: (legs, params) => call('legs', { legs, params }),
-    validateTraverse: (coords) => call('validateTraverse', { coords }),
+    init: (meta, buffer, params) => bridge.call('init', { meta, buffer, params }, [buffer]),
+    route: (a, b) => bridge.call('route', { a, b }),
+    legs: (legs, params) => bridge.call('legs', { legs, params }),
+    validateTraverse: (coords) => bridge.call('validateTraverse', { coords }),
   };
 }

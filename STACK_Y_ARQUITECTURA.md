@@ -1,4 +1,4 @@
-﻿# MARS+ — Stack tecnológico y arquitectura (documento base de desarrollo)
+# MARS+ — Stack tecnológico y arquitectura (documento base de desarrollo)
 
 > Este es el documento de referencia para programar el MVP. Si una decisión no aparece aquí, se sigue lo que dice [`docs/es/arquitectura-mvp.md`](docs/es/arquitectura-mvp.md). Las decisiones están en [`docs/es/adr/`](docs/es/adr/) y las fases, en [`FASES_DESARROLLO.md`](FASES_DESARROLLO.md).
 > **Objetivo del MVP:** un sitio **publicado y funcional** que planifique una EVA entre Octavia E. Butler Landing e Issole (Jezero). Debe calcular rutas de menor esfuerzo, evaluar qué plan es viable según el terreno, el tiempo, el clima y la radiación, y **explicar por qué**.
@@ -57,7 +57,7 @@ Planes **A** (foto + muestra), **C** (solo muestra) y **B** (solo documentación
 2. **Ciencia:** la parada tiene espacio de trabajo seguro.
 3. **Tiempo:** esclusa + viajes + trabajo + reserva ≤ límite.
 4. **Clima:** alerta de polvo; suelo ≥ mínimo y viento ≤ máximo en cada hora afuera.
-5. **Radiación:** alerta de evento solar; dosis = tasa × tiempo.
+5. **Radiación:** alerta de evento solar; dosis = tasa × tiempo en superficie (caminata + tareas). La esclusa está dentro del hábitat y la reserva no se gasta en una EVA nominal, así que no cuentan como exposición. El filtro de clima sí cubre toda la ventana presupuestada, reserva incluida.
 
 Un plan que falla un filtro se descarta con su **motivo estructurado** (código + valores), y la UI lo traduce. Ningún filtro compensa a otro.
 
@@ -112,7 +112,7 @@ martian-map/                       (repositorio: mars-plus)
 │   ├── 02-process/                ← process-geology · summarize-meda · extract-rad · build-traverse
 │   ├── 03-model/RouteEngine.cs    ← motor oficial de rutas + ImageWriter
 │   └── 04-export/                 ← export-web-data.ps1 (app/data + manifest; copia config/) · export-globe-assets.ps1 (app/assets/globe)
-├── tests/   index.html · harness.js · fixtures.js · domain/scenarios/parity/validity/ui/globe.test.js   (33 pruebas)
+├── tests/   index.html · run.mjs · harness.js · fixtures.js · domain/scenarios/parity/validity/ui/globe/criteria/session/assets.test.js
 ├── tools/   dev-server.ps1
 ├── data/                          ← FUERA de git
 │   ├── raw/                       ← descargas originales: dtm, ortho, meda, rad, geology, thermal, rover, globe (~1,7 GB)

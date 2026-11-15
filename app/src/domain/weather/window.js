@@ -9,12 +9,19 @@ export function conditionsAt(weather, scenario, hour) {
   return row[scenario] ?? { tempC: null, windMs: null };
 }
 
+// An instant that lands on an hour boundary is the return (the crew is back inside),
+// so that hour is not part of the window. The epsilon keeps float dust just past an
+// integer hour from pulling the next hour in.
+const HOUR_EDGE_H = 1e-9;
+
 /**
- * Checks every hour the crew is outside, from departure to return.
+ * Checks every hour the budgeted EVA overlaps, from departure up to but not including
+ * an exact return on the hour.
  * @returns {null | {code:string, values:object}} first violation, or null when the window is fine
  */
 export function checkWeatherWindow(weather, scenario, departureHour, totalMin, limits) {
-  for (let h = Math.floor(departureHour); h < departureHour + totalMin / 60; h++) {
+  const end = departureHour + totalMin / 60;
+  for (let h = Math.floor(departureHour); h < end - HOUR_EDGE_H; h++) {
     const c = conditionsAt(weather, scenario, h);
     const hour = ((h % 24) + 24) % 24;
     if (c.tempC == null || c.windMs == null) return { code: 'noWeatherData', values: { hour } };

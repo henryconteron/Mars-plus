@@ -31,7 +31,7 @@ foreach ($sol in $sols) {
 }
 $hourlyPath = Resolve-RepoPath $repo $raw.weatherHourly
 New-Item -ItemType Directory -Force (Split-Path $hourlyPath) | Out-Null
-$perSol | Export-Csv $hourlyPath -NoTypeInformation -Encoding UTF8
+Export-CsvUtf8NoBom $perSol $hourlyPath
 Write-Step "MEDA: $($sols.Count) sols summarized"
 
 function Get-Summary($values) {
@@ -60,5 +60,5 @@ $typical = foreach ($hour in 0..23) {
     storm_wind_ms = Round1 $(if ($sW) { $sW.Average })
   }
 }
-$typical | Export-Csv (Resolve-RepoPath $repo $raw.weatherTypical) -NoTypeInformation -Encoding UTF8
+Export-CsvUtf8NoBom $typical (Resolve-RepoPath $repo $raw.weatherTypical)
 Write-Step 'MEDA typical/worst/storm day written'

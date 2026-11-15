@@ -138,7 +138,7 @@ mars-plus/                                  ← raíz del repositorio (hoy: Desk
 │   │   │   ├── plans/filters.js            ← los 5 filtros, cada uno una función pura
 │   │   │   ├── plans/evaluate.js           ← cadena de filtros + orden de los planes viables
 │   │   │   ├── weather/window.js           ← ventana de clima por hora y escenario
-│   │   │   ├── radiation/dose.js           ← dosis = tasa × tiempo; regla de evento solar
+│   │   │   ├── radiation/dose.js           ← dosis = tasa × minutos en superficie (viaje + trabajo); la esclusa y la reserva no cuentan
 │   │   │   └── explain/explain.js          ← explicación estructurada (claves + valores, sin texto fijo)
 │   │   ├── application/
 │   │   │   ├── ports.js                    ← contratos JSDoc: SiteRepository, RouteSolver, MapView, GlobeView

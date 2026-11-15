@@ -88,8 +88,8 @@
 
   "point.landing": "<b>Octavia E. Butler Landing</b><br>Crew base · Máaz formation",
   "point.issole": "<b>Issole outcrop</b><br>Séítah formation · olivine cumulate with carbonates and hydrated sulfates (signs of water)<br>Samples: Robine (sol 298), Malay (sol 337)",
-  "point.sampling": "<b>Sampling stop</b><br>Flat workspace (≤10°) next to the Robine core site",
-  "point.observation": "<b>Observation stop</b><br>Flat workspace next to the Malay core site",
+  "point.sampling": "<b>Sampling stop</b><br>Flat workspace (slope ≤ {slope}°, large-dune fraction ≤ {dune}) next to the Robine core site",
+  "point.observation": "<b>Observation stop</b><br>Flat workspace (slope ≤ {slope}°, large-dune fraction ≤ {dune}) next to the Malay core site",
 
   "mission.title": "Mission",
   "mission.lead": "Walk from Octavia E. Butler Landing to the Issole outcrop, document signs of water alteration, collect a sample and return safely.",
@@ -104,6 +104,9 @@
   "mission.slope": "Max slope",
   "leg.landing_sampling": "Out: Landing → Issole",
   "leg.sampling_landing": "Back: Issole → Landing",
+  "leg.landing_observation": "Landing → observation stop",
+  "leg.observation_sampling": "Observation → sampling",
+  "leg.observation_landing": "Observation → Landing",
   "leg.straight_landing_sampling": "Straight line (reference)",
   "mission.note": "Times at normal pace. Sand doubles walking time; ~520 m of large dunes surround Issole and cannot be avoided. The straight line would cross blocked rocky cells.",
   "legend.out": "Out",
@@ -126,6 +129,8 @@
   "route.outside": "That point is outside the pilot area (≈1 km² around the route).",
   "route.blocked": "That point is on blocked terrain (too steep or rocky).",
   "route.noRoute": "No safe route connects these two points.",
+  "route.error": "The route calculation failed. Try again.",
+  "route.unknownMessage": "The route calculation received a message it does not understand.",
   "route.done": "Route ready in {ms} ms.",
   "route.distance": "Distance",
   "route.time": "Walking time",
@@ -159,7 +164,7 @@
   "filter.4": "Weather",
   "filter.5": "Radiation",
 
-  "explain.recommended": "Recommended: Plan {planId} — {planName}. Depart {departure}, back {returnTime} ({totalMin} min outside, {dose} µGy).",
+  "explain.recommended": "Recommended: Plan {planId} — {planName}. Depart {departure}, back {returnTime} ({totalMin} min, {dose} µGy).",
   "explain.whyNotPlan": "Plan {planId} ({planName}) is out — {filterName}: {reason}.",
   "explain.departureWindow": "Plan {planId} works for departures from {from} to {to}.",
   "explain.postpone": "Postpone the EVA. Closest option: Plan {planId} at {departure} — {filterName}: {reason}.",
@@ -191,7 +196,7 @@
   "radiation.lead": "Surface dose rate measured by Curiosity's RAD before, during and after the 28 Oct 2021 solar particle event — the first ground-level event recorded on Earth, the Moon and Mars.",
   "radiation.background": "Background {bg} µGy/h",
   "radiation.event": "Event peak {max} µGy/h ({ratio}× background)",
-  "radiation.eva": "Recommended EVA: {dose} µGy ({share}% of a surface day).",
+  "radiation.eva": "Recommended EVA: {dose} µGy over {outsideMin} min outside ({share}% of a surface day).",
   "radiation.noEva": "No EVA recommended under the current conditions.",
   "radiation.note": "Absorbed dose (µGy), RAD detector E, Gale crater. Jezero sits higher than Gale, with less atmosphere overhead, so the local dose would be somewhat larger. Cosmic rays are uniform at this scale: less time outside means less dose.",
 
@@ -212,7 +217,7 @@
   "assumptions.eva": "<b>EVA budget:</b> airlock {airlock} min + reserve {reserve} min; tasks: photo {photo} min, sample {sample} min.",
   "assumptions.weather": "<b>Weather thresholds:</b> ground ≥ {minC} °C and mean wind ≤ {maxMs} m/s for every hour outside.",
   "assumptions.radiation": "<b>Radiation:</b> {rad}",
-  "assumptions.stops": "<b>Stops:</b> chosen automatically as the flattest rock-free workspace near the rover positions for Robine and Malay (the rover arm works ~2 m ahead of the rover).",
+  "assumptions.stops": "<b>Stops:</b> the flattest rock-free workspace near the rover positions for Robine and Malay (slope ≤ {slope}°, large-dune fraction ≤ {dune}; the rover arm works ~2 m ahead of the rover).",
   "assumptions.whole": "<b>Plans</b> are checked as a whole; mid-route re-planning is out of scope for this pilot.",
 
   "photos.title": "What you'll see at Issole",

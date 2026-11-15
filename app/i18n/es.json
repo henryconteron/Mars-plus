@@ -88,8 +88,8 @@
 
   "point.landing": "<b>Octavia E. Butler Landing</b><br>Base de la tripulación · formación Máaz",
   "point.issole": "<b>Afloramiento Issole</b><br>Formación Séítah · cumulado de olivino con carbonatos y sulfatos hidratados (indicios de agua)<br>Muestras: Robine (sol 298), Malay (sol 337)",
-  "point.sampling": "<b>Parada de muestreo</b><br>Espacio de trabajo plano (≤10°) junto al sitio de Robine",
-  "point.observation": "<b>Parada de observación</b><br>Espacio de trabajo plano junto al sitio de Malay",
+  "point.sampling": "<b>Parada de muestreo</b><br>Espacio de trabajo plano (pendiente ≤ {slope}°, fracción de duna grande ≤ {dune}) junto al sitio de Robine",
+  "point.observation": "<b>Parada de observación</b><br>Espacio de trabajo plano (pendiente ≤ {slope}°, fracción de duna grande ≤ {dune}) junto al sitio de Malay",
 
   "mission.title": "Misión",
   "mission.lead": "Caminar desde Octavia E. Butler Landing hasta el afloramiento Issole, documentar indicios de alteración por agua, tomar una muestra y volver con seguridad.",
@@ -104,6 +104,9 @@
   "mission.slope": "Pend. máx",
   "leg.landing_sampling": "Ida: Landing → Issole",
   "leg.sampling_landing": "Vuelta: Issole → Landing",
+  "leg.landing_observation": "Landing → parada de observación",
+  "leg.observation_sampling": "Observación → muestreo",
+  "leg.observation_landing": "Observación → Landing",
   "leg.straight_landing_sampling": "Línea recta (referencia)",
   "mission.note": "Tiempos a ritmo normal. La arena duplica el tiempo de caminata; ~520 m de dunas grandes rodean Issole y no se pueden evitar. La línea recta cruzaría celdas bloqueadas por rocas.",
   "legend.out": "Ida",
@@ -126,6 +129,8 @@
   "route.outside": "Ese punto está fuera de la zona piloto (≈1 km² alrededor de la ruta).",
   "route.blocked": "Ese punto está en terreno bloqueado (demasiado empinado o rocoso).",
   "route.noRoute": "No hay una ruta segura entre estos dos puntos.",
+  "route.error": "El cálculo de la ruta falló. Inténtalo de nuevo.",
+  "route.unknownMessage": "El cálculo de la ruta recibió un mensaje que no entiende.",
   "route.done": "Ruta lista en {ms} ms.",
   "route.distance": "Distancia",
   "route.time": "Tiempo caminando",
@@ -159,7 +164,7 @@
   "filter.4": "Clima",
   "filter.5": "Radiación",
 
-  "explain.recommended": "Recomendado: Plan {planId} — {planName}. Salida {departure}, regreso {returnTime} ({totalMin} min afuera, {dose} µGy).",
+  "explain.recommended": "Recomendado: Plan {planId} — {planName}. Salida {departure}, regreso {returnTime} ({totalMin} min, {dose} µGy).",
   "explain.whyNotPlan": "El Plan {planId} ({planName}) queda fuera — {filterName}: {reason}.",
   "explain.departureWindow": "El Plan {planId} funciona con salidas entre {from} y {to}.",
   "explain.postpone": "Posponer la EVA. Opción más cercana: Plan {planId} a las {departure} — {filterName}: {reason}.",
@@ -191,7 +196,7 @@
   "radiation.lead": "Tasa de dosis en superficie medida por RAD de Curiosity antes, durante y después del evento de partículas solares del 28-oct-2021, el primero registrado a nivel del suelo en la Tierra, la Luna y Marte.",
   "radiation.background": "Fondo {bg} µGy/h",
   "radiation.event": "Pico del evento {max} µGy/h ({ratio}× el fondo)",
-  "radiation.eva": "EVA recomendada: {dose} µGy ({share}% de un día en superficie).",
+  "radiation.eva": "EVA recomendada: {dose} µGy en {outsideMin} min afuera ({share}% de un día en superficie).",
   "radiation.noEva": "No hay EVA recomendada con las condiciones actuales.",
   "radiation.note": "Dosis absorbida (µGy), detector E de RAD, cráter Gale. Jezero está más alto que Gale, con menos atmósfera encima, así que la dosis local sería algo mayor. Los rayos cósmicos son uniformes a esta escala: menos tiempo afuera, menos dosis.",
 
@@ -212,7 +217,7 @@
   "assumptions.eva": "<b>Presupuesto de la EVA:</b> esclusa {airlock} min + reserva {reserve} min; tareas: foto {photo} min, muestra {sample} min.",
   "assumptions.weather": "<b>Umbrales de clima:</b> suelo ≥ {minC} °C y viento medio ≤ {maxMs} m/s en cada hora afuera.",
   "assumptions.radiation": "<b>Radiación:</b> {rad}",
-  "assumptions.stops": "<b>Paradas:</b> se eligen automáticamente como el espacio de trabajo más plano y sin rocas cerca de las posiciones del rover para Robine y Malay (el brazo del rover trabaja ~2 m por delante).",
+  "assumptions.stops": "<b>Paradas:</b> el espacio de trabajo más plano y sin rocas cerca de las posiciones del rover para Robine y Malay (pendiente ≤ {slope}°, fracción de duna grande ≤ {dune}; el brazo del rover trabaja ~2 m por delante).",
   "assumptions.whole": "<b>Los planes</b> se evalúan completos; volver a planificar a mitad de ruta queda fuera de este piloto.",
 
   "photos.title": "Qué verás al llegar a Issole",

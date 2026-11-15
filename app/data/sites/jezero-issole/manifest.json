@@ -1,4 +1,4 @@
-﻿{
+{
     "site":  "jezero-issole",
     "generated":  "2026-11-14T22:45:09",
     "paramsVersion":  "2.0.0",
@@ -11,8 +11,8 @@
                   },
                   {
                       "file":  "overlays.json",
-                      "bytes":  1258,
-                      "sha256":  "ccd505205c37c095c788113c7493b0db8c5359d73c600053354c1dee8f6314a8",
+                      "bytes":  1226,
+                      "sha256":  "4612934fbefcb611d039638349ff5b2a382f0040f6d7b2e417d9d591e20fadfe",
                       "source":  "Derived by MARS+ pipeline"
                   },
                   {
@@ -47,8 +47,8 @@
                   },
                   {
                       "file":  "terrain-2m.json",
-                      "bytes":  2212,
-                      "sha256":  "a8049574a437c9ced34223caf4ba912eeb7cb008eceded9cf93d37e2d561b46c",
+                      "bytes":  2143,
+                      "sha256":  "bc88b9fb324553f8ea1beeb3701d1df85af31fff9e754fa00a95ce37ef6c3900",
                       "source":  "Derived by MARS+ pipeline"
                   },
                   {
