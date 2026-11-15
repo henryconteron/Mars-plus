@@ -75,5 +75,12 @@
     "visibleFromIrAbsorption": 2.6,
     "referencePressurePa": 610,
     "source": "Postpone the EVA when Mastcam-Z 880 nm column optical depth is at least 1.0. In sols 286-339 the non-storm daily medians stay at or below 0.845 (median about 0.50) and the highest storm-day median is 1.376 (sols 316-317; sol 313 has no Mastcam-Z tau in the table). Lemmon et al. 2022 (doi:10.1029/2022GL100126) separately report an RDS visible peak near 1.7; that peak is not a row in the Mastcam-Z table (doi:10.17632/gktjp9jptb.2) and is not used as a measurement. Typical and worst weather share the background dust value: worst refers to temperature and wind. The 1.0 threshold is a scenario rule for this planner."
+  },
+  "sun": {
+    "obliquityDeg": 25.19,
+    "defaultLs": 153,
+    "defaultLtst": 10,
+    "marchM": 200,
+    "source": "Declination is asin(sin(obliquity) * sin(Ls)) with the mean obliquity 25.19 deg (Allison and McEwen 2000, Geophys. Res. Lett.). LTST is local true solar time, so the hour angle is (LTST-12)*15 deg and the equation of time is not applied. Default Ls 153 deg is the Issole storm season (Mastcam-Z sols 313-317). Shadows are ray-marched on the 2 m elevation grid out to 200 m; terrain farther away is not tested."
   }
 }

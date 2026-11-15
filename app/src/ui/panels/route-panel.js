@@ -5,9 +5,9 @@ import { fmt } from '../../shared/format.js';
 import { renderElevationProfile } from '../charts/elevation-profile.js';
 
 export function createRoutePanel(el, { i18n, actions }) {
-  let btnA, btnB, status, stats, svg;
+  let btnA, btnB, status, stats, svg, hourLabel;
 
-  function build() {
+  function build(state) {
     const { t } = i18n;
     clear(el);
     btnA = h('button', { type: 'button', class: 'btn', onclick: () => actions.pick('A') }, t('route.setA'));
@@ -15,9 +15,14 @@ export function createRoutePanel(el, { i18n, actions }) {
     status = h('div', { class: 'status', role: 'status', 'aria-live': 'polite' });
     stats = h('div', { class: 'stats' });
     svg = s('svg', { class: 'chart', role: 'img' });
+    const sun = state.sun;
+    const ls = h('input', { type: 'number', min: 0, max: 360, step: 1, value: sun.ls, 'aria-label': t('route.sunLs'), onchange: (e) => actions.setSun({ ls: Number(e.target.value) }) });
+    const hour = h('input', { type: 'range', min: 0, max: 24, step: 0.5, value: sun.hour, 'aria-label': t('route.sunHour'), oninput: (e) => actions.setSun({ hour: Number(e.target.value) }) });
+    hourLabel = h('span', {}, `${t('route.sunHour')} ${sun.hour}`);
     el.append(
       h('h2', {}, t('route.title')),
       h('p', { class: 'lead' }, t('route.help')),
+      h('div', { class: 'field' }, h('label', {}, t('route.sunLs'), ' ', ls), h('label', {}, hourLabel, ' ', hour)),
       h('div', { class: 'btn-row' }, btnA, btnB,
         h('button', { type: 'button', class: 'btn', onclick: actions.useMission }, t('route.mission')),
         h('button', { type: 'button', class: 'btn', onclick: actions.clear }, t('route.clear'))),
@@ -28,6 +33,7 @@ export function createRoutePanel(el, { i18n, actions }) {
   function update(state) {
     const { t } = i18n;
     btnA.setAttribute('aria-pressed', String(state.pick === 'A'));
+    if (hourLabel && state.sun) hourLabel.textContent = `${t('route.sunHour')} ${state.sun.hour}`;
     btnB.setAttribute('aria-pressed', String(state.pick === 'B'));
     const rs = state.routeStatus;
     status.className = `status${rs.kind === 'error' ? ' bad' : ''}`;

@@ -8,6 +8,7 @@ import { createWorkerRouteSolver } from './infrastructure/routing/worker-route-s
 import { createLeafletMapView } from './infrastructure/map/leaflet-map-view.js';
 import { TerrainGrid } from './domain/terrain/grid.js';
 import { ROUGHNESS_SCALES, meanAbsoluteDeviation } from './domain/terrain/roughness.js';
+import { solarPosition, shadowMask } from './domain/terrain/sun.js';
 import { rampColor } from './domain/dust/dust.js';
 import { createI18n } from './ui/i18n.js';
 import { createMissionPanel } from './ui/panels/mission-panel.js';
@@ -93,6 +94,16 @@ async function main() {
     }
     map.setRaster(scale.id, `layer.${scale.id}`, rgba, terrainGrid.cols, terrainGrid.rows, 0.75);
   }
+  const sun0 = data.params.sun;
+  const paintShadows = (ls, hour) => {
+    const lat = (terrainGrid.bounds.south + terrainGrid.bounds.north) / 2;
+    const sun = solarPosition(lat, ls, hour, sun0.obliquityDeg);
+    const mask = shadowMask(terrainGrid.z, terrainGrid.rows, terrainGrid.cols, terrainGrid.res, terrainGrid.cosLat, sun, sun0.marchM);
+    const rgba = new Uint8ClampedArray(mask.length * 4);
+    for (let i = 0; i < mask.length; i++) if (mask[i]) { rgba[i * 4 + 3] = 150; }
+    map.setRaster('shadow', 'layer.shadow', rgba, terrainGrid.cols, terrainGrid.rows, 0.85);
+  };
+  paintShadows(sun0.defaultLs, sun0.defaultLtst);
   const firstPlan = service.evaluate(service.defaultPlanOptions());
   store = createStore({
     view: globeView && !pendingLocal ? 'globe' : 'local',
@@ -100,6 +111,7 @@ async function main() {
     pick: null, pointA: null, pointB: null,
     routeStatus: { kind: 'idle' }, userRoute: null,
     paceKey: 'normal', planOptions: firstPlan.evaluation.options, dustInfo: firstPlan.dustInfo,
+    sun: { ls: data.params.sun.defaultLs, hour: data.params.sun.defaultLtst },
     evaluation: firstPlan.evaluation, explanation: firstPlan.explanation,
     sensitivity: { status: 'idle', rows: null }, sensitivityView: null, traverseValidation: null, routingReady: false,
   });
@@ -157,6 +169,12 @@ async function main() {
         console.error(err);
         store.set({ sensitivity: { status: 'error', rows: null } });
       }
+    },
+    setSun: ({ ls, hour }) => {
+      const prev = store.get().sun;
+      const next = { ls: Number.isFinite(ls) ? ls : prev.ls, hour: Number.isFinite(hour) ? hour : prev.hour };
+      paintShadows(next.ls, next.hour);
+      store.set({ sun: next });
     },
     setPace: (key) => {
       store.set({ paceKey: key });
