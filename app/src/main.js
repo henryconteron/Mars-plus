@@ -127,6 +127,7 @@ async function main() {
     paceKey: 'normal', planOptions: firstPlan.evaluation.options, dustInfo: firstPlan.dustInfo,
     sun: { ls: data.params.sun.defaultLs, hour: data.params.sun.defaultLtst },
     losRequired: false,
+    routeColor: 'budget',
     evaluation: firstPlan.evaluation, explanation: firstPlan.explanation,
     sensitivity: { status: 'idle', rows: null }, sensitivityView: null, traverseValidation: null, routingReady: false,
   });
@@ -185,6 +186,7 @@ async function main() {
         store.set({ sensitivity: { status: 'error', rows: null } });
       }
     },
+    setRouteColor: (routeColor) => store.set({ routeColor }),
     setLosRequired: (losRequired) => {
       store.set({ losRequired });
       computeIfReady();
@@ -256,7 +258,9 @@ async function main() {
     if (s.officialRes !== last.officialRes) map.showOfficial(s.officialRes);
     if (s.pointA !== last.pointA) map.setPoint('A', s.pointA);
     if (s.pointB !== last.pointB) map.setPoint('B', s.pointB);
-    if (s.userRoute !== last.userRoute) map.showUserRoute(s.userRoute?.coords ?? null);
+    if (s.userRoute !== last.userRoute || s.routeColor !== last.routeColor || s.planOptions?.limitMin !== last.planOptions?.limitMin) {
+      map.showUserRoute(s.userRoute, { mode: s.routeColor || 'budget', limitMin: s.planOptions.limitMin });
+    }
     map.setPickCursor(Boolean(s.pick));
     last = s;
   });

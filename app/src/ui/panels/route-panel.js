@@ -24,6 +24,7 @@ export function createRoutePanel(el, { i18n, actions, data }) {
       h('p', { class: 'lead' }, t('route.help')),
       h('div', { class: 'field' }, h('label', {}, t('route.sunLs'), ' ', ls), h('label', {}, hourLabel, ' ', hour)),
       h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: state.losRequired, onchange: (e) => actions.setLosRequired(e.target.checked) }), t('route.requireLos')),
+      h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: state.routeColor === 'segment', onchange: (e) => actions.setRouteColor(e.target.checked ? 'segment' : 'budget') }), t(state.routeColor === 'segment' ? 'route.colorSegment' : 'route.colorBudget')),
       h('div', { class: 'btn-row' }, btnA, btnB,
         h('button', { type: 'button', class: 'btn', onclick: actions.useMission }, t('route.mission')),
         h('button', { type: 'button', class: 'btn', onclick: actions.clear }, t('route.clear'))),

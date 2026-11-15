@@ -109,6 +109,8 @@
   "layer.shadow": "Shadows at the chosen hour",
   "layer.los": "Line of sight to the habitat",
   "route.requireLos": "Require line of sight to the habitat",
+  "route.colorBudget": "Color by time left in the EVA limit",
+  "route.colorSegment": "Color by segment time",
   "route.sunLs": "Ls",
   "route.sunHour": "LTST",
   "layer.slope": "Slope",

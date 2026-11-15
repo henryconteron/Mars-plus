@@ -8,6 +8,12 @@ import { edgeTime } from '../terrain/cost.js';
  *            largeDuneM:number,maxRockFraction:number,coords:number[][]}} RouteStats
  * @returns {RouteStats}
  */
+/** Green while time remains, red as the EVA limit is used up. */
+export function budgetColor(cumMin, limitMin) {
+  const used = limitMin > 0 ? Math.max(0, Math.min(1, cumMin / limitMin)) : 1;
+  return `hsl(${((1 - used) * 130).toFixed(0)} 65% 48%)`;
+}
+
 export function routeStats(model, path) {
   const { grid } = model;
   const { cols, res, cosLat } = grid;

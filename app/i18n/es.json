@@ -109,6 +109,8 @@
   "layer.shadow": "Sombras a la hora elegida",
   "layer.los": "Línea de vista al hábitat",
   "route.requireLos": "Exigir línea de vista al hábitat",
+  "route.colorBudget": "Color según el tiempo que queda del límite",
+  "route.colorSegment": "Color según el tiempo del tramo",
   "route.sunLs": "Ls",
   "route.sunHour": "LTST",
   "layer.slope": "Pendiente",

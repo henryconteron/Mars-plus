@@ -3,6 +3,7 @@
 // Geographic CRS (EPSG:4326 scheme) matches the Mars Trek tiling, so lon/lat are used directly.
 import { trekTileUrl, TREK_ATTRIBUTION, TREK_MAX_NATIVE_ZOOM } from './mars-trek-layers.js';
 import { escapeHtml } from '../../shared/dom.js';
+import { budgetColor } from '../../domain/routing/route-stats.js';
 
 const GEO_STYLE = {
   largeDunes: { color: '#cc8e37', fillColor: '#cc8e37', fillOpacity: 0.10 },
@@ -144,12 +145,20 @@ export function createLeafletMapView(container, { data, assetUrl }) {
       if (userPins[which]) { userPins[which].remove(); userPins[which] = null; }
       if (p) userPins[which] = L.marker([p.lat, p.lon], { icon: pin('ab', '#f4f1ee', which) }).addTo(map);
     },
-    showUserRoute(coords) {
+    showUserRoute(route, { mode = 'budget', limitMin = 180 } = {}) {
       layers.user.clearLayers();
-      if (!coords) return;
-      const ll = coords.map(([lon, lat]) => [lat, lon]);
-      L.polyline(ll, { color: '#14110f', weight: 6, opacity: 0.7 }).addTo(layers.user);
-      L.polyline(ll, { color: '#f4f1ee', weight: 3 }).addTo(layers.user);
+      const coords = route?.coords;
+      if (!coords?.length) return;
+      let maxSeg = 0;
+      if (mode === 'segment' && route.cumMin) for (let i = 1; i < route.cumMin.length; i++) maxSeg = Math.max(maxSeg, route.cumMin[i] - route.cumMin[i - 1]);
+      for (let i = 1; i < coords.length; i++) {
+        const color = mode === 'segment'
+          ? budgetColor((route.cumMin?.[i] ?? 0) - (route.cumMin?.[i - 1] ?? 0), maxSeg || 1)
+          : budgetColor(route.cumMin?.[i] ?? 0, limitMin);
+        const ll = [[coords[i - 1][1], coords[i - 1][0]], [coords[i][1], coords[i][0]]];
+        L.polyline(ll, { color: '#14110f', weight: 6, opacity: 0.7 }).addTo(layers.user);
+        L.polyline(ll, { color, weight: 3 }).addTo(layers.user);
+      }
     },
     fitPilot() { map.fitBounds(pilotBounds.pad(0.02)); },
     invalidate() { map.invalidateSize(); },
