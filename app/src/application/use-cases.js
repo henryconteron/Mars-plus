@@ -48,9 +48,9 @@ export function createMissionService({ repository, solver }) {
     },
 
     /** Least-effort route between two points of the pilot area. */
-    async computeRoute(a, b) {
+    async computeRoute(a, b, options) {
       await solverReady;
-      return solver.route(a, b);
+      return solver.route(a, b, options);
     },
 
     /** Leg times for each sand factor (computed in the browser over the 2 m grid). Cached by the caller. */

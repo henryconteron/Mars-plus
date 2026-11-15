@@ -4,7 +4,7 @@ import { h, s, clear } from '../../shared/dom.js';
 import { fmt } from '../../shared/format.js';
 import { renderElevationProfile } from '../charts/elevation-profile.js';
 
-export function createRoutePanel(el, { i18n, actions }) {
+export function createRoutePanel(el, { i18n, actions, data }) {
   let btnA, btnB, status, stats, svg, hourLabel;
 
   function build(state) {
@@ -23,6 +23,7 @@ export function createRoutePanel(el, { i18n, actions }) {
       h('h2', {}, t('route.title')),
       h('p', { class: 'lead' }, t('route.help')),
       h('div', { class: 'field' }, h('label', {}, t('route.sunLs'), ' ', ls), h('label', {}, hourLabel, ' ', hour)),
+      h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: state.losRequired, onchange: (e) => actions.setLosRequired(e.target.checked) }), t('route.requireLos')),
       h('div', { class: 'btn-row' }, btnA, btnB,
         h('button', { type: 'button', class: 'btn', onclick: actions.useMission }, t('route.mission')),
         h('button', { type: 'button', class: 'btn', onclick: actions.clear }, t('route.clear'))),
@@ -53,7 +54,7 @@ export function createRoutePanel(el, { i18n, actions }) {
       stat('route.distance', `${fmt(r.distanceM)} m`), stat('route.time', `${fmt(r.timeMin, 1)} min`),
       stat('route.climbDescent', `+${fmt(r.climbM, 1)} / −${fmt(r.descentM, 1)}`), stat('route.dunes', `${fmt(r.largeDuneM)} m`),
       stat('route.maxSlope', `${fmt(r.maxSlopeDeg, 1)}°`), stat('route.rocks', `${fmt(r.maxRockFraction * 100)}%`));
-    renderElevationProfile(svg, [{ coords: r.coords, color: '#f4f1ee' }], t('route.profile'));
+    renderElevationProfile(svg, [{ coords: r.coords, color: '#f4f1ee', grades: r.grades, steepDeg: data.params.workspace.maxSlopeDeg }], t('route.profile'));
   }
 
   return { build, update };

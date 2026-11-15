@@ -107,6 +107,8 @@
   "layer.rough10": "Roughness 10 m, display only",
   "layer.rough26": "Roughness 26 m, display only (grid cannot make 25 m)",
   "layer.shadow": "Shadows at the chosen hour",
+  "layer.los": "Line of sight to the habitat",
+  "route.requireLos": "Require line of sight to the habitat",
   "route.sunLs": "Ls",
   "route.sunHour": "LTST",
   "layer.slope": "Slope",

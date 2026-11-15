@@ -8,7 +8,7 @@ self.onmessage = (e) => {
   try {
     let result;
     if (type === 'init') { core.init(payload.meta, payload.buffer, payload.params); result = { ok: true }; }
-    else if (type === 'route') result = core.route(payload.a, payload.b);
+    else if (type === 'route') result = core.route(payload.a, payload.b, payload.options);
     else if (type === 'legs') result = core.legs(payload.legs, payload.params);
     else if (type === 'validateTraverse') result = core.validateTraverse(payload.coords);
     else result = { ok: false, code: 'unknownMessage' };

@@ -9,6 +9,7 @@ import { createLeafletMapView } from './infrastructure/map/leaflet-map-view.js';
 import { TerrainGrid } from './domain/terrain/grid.js';
 import { ROUGHNESS_SCALES, meanAbsoluteDeviation } from './domain/terrain/roughness.js';
 import { solarPosition, shadowMask } from './domain/terrain/sun.js';
+import { viewshedMask } from './domain/terrain/viewshed.js';
 import { rampColor } from './domain/dust/dust.js';
 import { createI18n } from './ui/i18n.js';
 import { createMissionPanel } from './ui/panels/mission-panel.js';
@@ -104,6 +105,19 @@ async function main() {
     map.setRaster('shadow', 'layer.shadow', rgba, terrainGrid.cols, terrainGrid.rows, 0.85);
   };
   paintShadows(sun0.defaultLs, sun0.defaultLtst);
+  const habitat = data.site.points.landing;
+  const habitatCell = terrainGrid.cellOf(habitat.lon, habitat.lat);
+  const vis = data.params.visibility;
+  const losMask = habitatCell >= 0
+    ? viewshedMask(terrainGrid.z, terrainGrid.rows, terrainGrid.cols, terrainGrid.res, terrainGrid.cosLat, habitatCell, vis.habitatHeightM, vis.crewEyeHeightM)
+    : new Uint8Array(terrainGrid.size);
+  const losRgba = new Uint8ClampedArray(losMask.length * 4);
+  for (let i = 0; i < losMask.length; i++) {
+    if (!Number.isFinite(terrainGrid.z[i])) continue;
+    if (losMask[i]) { losRgba[i * 4 + 1] = 160; losRgba[i * 4 + 3] = 70; }
+    else { losRgba[i * 4] = 180; losRgba[i * 4 + 3] = 110; }
+  }
+  map.setRaster('los', 'layer.los', losRgba, terrainGrid.cols, terrainGrid.rows, 0.8);
   const firstPlan = service.evaluate(service.defaultPlanOptions());
   store = createStore({
     view: globeView && !pendingLocal ? 'globe' : 'local',
@@ -112,6 +126,7 @@ async function main() {
     routeStatus: { kind: 'idle' }, userRoute: null,
     paceKey: 'normal', planOptions: firstPlan.evaluation.options, dustInfo: firstPlan.dustInfo,
     sun: { ls: data.params.sun.defaultLs, hour: data.params.sun.defaultLtst },
+    losRequired: false,
     evaluation: firstPlan.evaluation, explanation: firstPlan.explanation,
     sensitivity: { status: 'idle', rows: null }, sensitivityView: null, traverseValidation: null, routingReady: false,
   });
@@ -130,7 +145,7 @@ async function main() {
     const { pointA, pointB } = store.get();
     if (!pointA || !pointB) return;
     store.set({ routeStatus: { kind: 'computing' }, userRoute: null });
-    const settled = await settleRoute(routes, id, () => service.computeRoute(pointA, pointB));
+    const settled = await settleRoute(routes, id, () => service.computeRoute(pointA, pointB, store.get().losRequired ? { requireLineOfSight: true, mask: losMask } : undefined));
     if (settled.stale) return;
     if (settled.error) console.error(settled.error);
     store.set({ routeStatus: settled.status, userRoute: settled.userRoute });
@@ -169,6 +184,10 @@ async function main() {
         console.error(err);
         store.set({ sensitivity: { status: 'error', rows: null } });
       }
+    },
+    setLosRequired: (losRequired) => {
+      store.set({ losRequired });
+      computeIfReady();
     },
     setSun: ({ ls, hour }) => {
       const prev = store.get().sun;
