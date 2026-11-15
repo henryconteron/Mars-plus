@@ -62,3 +62,59 @@ test('explanation: recommended plan comes with "why not" for the other plans', a
   assertEqual(ex[0].code, 'recommended');
   assert(ex.some((s) => s.code === 'whyNotPlan' && s.values.planId === 'A' && s.values.reason.code === 'overLimit'), 'should explain why Plan A is out');
 });
+
+test('explanation: the long route that misses the limit proposes the shorter plan with its time', async () => {
+  const e = await run({});
+  const ex = explainEvaluation(e);
+  const alt = ex.find((s) => s.code === 'alternativeRoute' && s.values.planId === 'A');
+  assert(alt, 'Plan A should be offered as the longer route');
+  assertEqual(alt.values.kind, 'longer');
+  assertEqual(alt.values.status, 'rejected');
+  assertEqual(alt.values.reason.code, 'overLimit');
+  assertEqual(Math.round(alt.values.recommendedMin), 159);
+  assert(alt.values.totalMin > alt.values.recommendedMin, 'the rejected route must be the longer one');
+  const open = ex.filter((s) => s.code === 'alternativeRoute' && s.values.kind === 'shorter' && s.values.status === 'viable');
+  assert(open.length >= 1, 'a shorter plan that still fits should be listed with its own time');
+  const shift = ex.find((s) => s.code === 'shiftedDeparture');
+  assert(shift, 'the hour before the window should move the departure');
+  assertEqual(shift.values.toHour, 9);
+  assertEqual(shift.values.fromHour, 8);
+});
+
+test('explanation: a weather failure moves the departure and keeps the recalculated time', async () => {
+  const e = await run({ limitMin: 210, weatherScenario: 'worst' });
+  const ex = explainEvaluation(e);
+  const s = ex.find((x) => x.code === 'shiftedDeparture');
+  assert(s, 'departure should move off the cold hour');
+  assertEqual(s.values.fromHour, 9);
+  assertEqual(s.values.toHour, 10);
+  assertEqual(s.values.reason.code, 'tooCold');
+  assertEqual(Math.round(s.values.totalMin), 184);
+});
+
+test('explanation: a dust alert blocks the long route and the short one', async () => {
+  const ex = explainEvaluation(await run({ limitMin: 210, weatherScenario: 'storm', dustStormAlert: true }));
+  const s = ex.find((x) => x.code === 'noRouteEitherLength');
+  assert(s, 'dust should veto every length');
+  assertEqual(s.values.planId, 'A');
+  assert(s.values.totalMin > 0, 'the plan that would have gone still has a computed duration');
+});
+
+test('explanation: a solar alert blocks the long route and the short one', async () => {
+  const ex = explainEvaluation(await run({ limitMin: 210, solarEventAlert: true }));
+  const s = ex.find((x) => x.code === 'noRouteEitherLength');
+  assert(s, 'solar particles should veto every length');
+  assertEqual(s.values.reason.code, 'solarEvent');
+  assert(s.values.totalMin > 0);
+});
+
+test('explanation: when every route is over the limit, the shortest recalculated time is named', async () => {
+  const e = await run({ limitMin: 60 });
+  assertEqual(e.recommended, null);
+  const ex = explainEvaluation(e);
+  const s = ex.find((x) => x.code === 'shortestStillOver');
+  assert(s, 'the shortest timed plan should be named');
+  const min = Math.min(...e.results.filter((r) => r.totalMin > 0).map((r) => r.totalMin));
+  assertEqual(s.values.totalMin, min);
+  assertEqual(s.values.reason.code, 'overLimit');
+});
