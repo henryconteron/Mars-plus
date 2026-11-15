@@ -23,6 +23,8 @@ export function defaultPlanOptions(params) {
     paceFactor: params.pace.normal,
     weatherScenario: 'typical',
     dustStormAlert: false,
+    dustAlertOverride: null,
+    dustSol: null,
     solarEventAlert: false,
     minGroundTempC: params.weather.minGroundTempC,
     maxMeanWindMs: params.weather.maxMeanWindMs,

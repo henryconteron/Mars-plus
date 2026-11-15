@@ -49,7 +49,7 @@ function mainThreadSolver() {
   const core = createRouteCore();
   return {
     init: async (m, b, p) => core.init(m, b, p),
-    route: async (a, b) => core.route(a, b),
+    route: async (a, b, options) => core.route(a, b, options),
     legs: async (legs, params) => core.legs(legs, params),
     validateTraverse: async (coords) => core.validateTraverse(coords),
   };
@@ -67,7 +67,7 @@ export function createWorkerRouteSolver() {
   const bridge = createWorkerBridge(worker);
   return {
     init: (meta, buffer, params) => bridge.call('init', { meta, buffer, params }, [buffer]),
-    route: (a, b) => bridge.call('route', { a, b }),
+    route: (a, b, options) => bridge.call('route', { a, b, options }),
     legs: (legs, params) => bridge.call('legs', { legs, params }),
     validateTraverse: (coords) => bridge.call('validateTraverse', { coords }),
   };

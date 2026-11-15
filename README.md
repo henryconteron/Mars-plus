@@ -79,7 +79,7 @@ node tests/run.mjs
 - Sand doubles walking time (based on Lejeune et al. 1998, energy cost of walking on sand). About 520 m of large dunes surround Issole and cannot be avoided.
 - Rocks are detected from HiRISE shadows; rocks smaller than ~0.75 m are invisible from orbit.
 - Radiation rate comes from Gale crater (RAD). Jezero is higher, so the local dose would be somewhat larger. The nominal dose is that rate times time on the surface (walking and tasks). Airlock time is inside the habitat, and the reserve is unused margin, so neither is counted as exposure. The weather check still covers the whole budgeted window, including the reserve.
-- The dust storm is modeled as an explicit alert, because dust opacity is not in the derived MEDA files.
+- The dust-storm alert follows Mastcam-Z 880 nm optical depth at Jezero and turns on at τ ≥ 1.0 (see `config/model-parameters.json`). The crew can still override it. Derived MEDA files do not contain opacity. Global maps show the Montabone column-dust climatology and MDAD storm frequency; both are orbital and do not separate routes inside Jezero. Provenance is in `app/data/dust/catalog.json` and `docs/es/datos-polvo.md`.
 - Stops are the flattest rock-free workspaces near the rover positions for Robine and Malay.
 
 ## AI assistance (Space Apps "Super Intelligence" disclosure)

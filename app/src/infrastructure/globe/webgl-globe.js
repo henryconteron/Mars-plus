@@ -156,8 +156,18 @@ function createRenderer(gl, canvas) {
       else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
     }
     if (gl.getError() !== gl.NO_ERROR) throw new Error('texture upload failed');
-    gl.uniform1f(u.light, LIGHTING[key]);
+    gl.uniform1f(u.light, LIGHTING[key] ?? 0);
     gl.uniform1i(u.mode, Number(key === 'mola'));
+  }
+
+  function showRaster(pixels, width, height) {
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+    if (gl.getError() !== gl.NO_ERROR) throw new Error('dust texture upload failed');
+    gl.uniform1f(u.light, 0);
+    gl.uniform1i(u.mode, 0);
   }
 
   function draw(camera) {
@@ -173,7 +183,7 @@ function createRenderer(gl, canvas) {
     gl.uniformMatrix3fv(u.orientation, false, [-z, 0, x, -sinLat * x, cosLat, -sinLat * z, cosLat * x, sinLat, cosLat * z]);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
-  return { draw, setLayer };
+  return { draw, setLayer, showRaster };
 }
 
 async function gunzip(url) {
@@ -351,6 +361,15 @@ export function createWebGLGlobe(canvas, { assetBase, meta, reducedMotion }) {
       if (request !== layerRequest || !renderer) return false;
       renderer.setLayer(key, d);
       activeLayer = key;
+      requestDraw();
+      return true;
+    },
+
+    /** Flat colour raster (dust). Row 0 is north, the same layout as the geology grid. */
+    showRaster(pixels, width, height) {
+      if (!renderer) return false;
+      renderer.showRaster(pixels, width, height);
+      activeLayer = 'dust';
       requestDraw();
       return true;
     },

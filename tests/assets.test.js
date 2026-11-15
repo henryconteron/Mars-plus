@@ -9,6 +9,8 @@ const JSON_ASSETS = [
   '../app/i18n/en.json',
   '../app/i18n/es.json',
   '../app/assets/globe/globe.json',
+  '../app/data/dust/catalog.json',
+  '../app/data/sites/jezero-issole/thermal-inertia.json',
   '../app/data/sites/jezero-issole/manifest.json',
   '../app/data/sites/jezero-issole/terrain-2m.json',
   '../app/data/sites/jezero-issole/overlays.json',

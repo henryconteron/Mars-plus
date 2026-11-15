@@ -6,6 +6,13 @@ import { createMissionService } from './application/use-cases.js';
 import { createStaticSiteRepository } from './infrastructure/data/static-site-repository.js';
 import { createWorkerRouteSolver } from './infrastructure/routing/worker-route-solver.js';
 import { createLeafletMapView } from './infrastructure/map/leaflet-map-view.js';
+import { TerrainGrid } from './domain/terrain/grid.js';
+import { ROUGHNESS_SCALES, meanAbsoluteDeviation } from './domain/terrain/roughness.js';
+import { solarPosition, shadowMask } from './domain/terrain/sun.js';
+import { viewshedMask } from './domain/terrain/viewshed.js';
+import { buildCostModel } from './domain/terrain/cost.js';
+import { reachabilityMask, corridorMasks } from './domain/routing/time-field.js';
+import { rampColor } from './domain/dust/dust.js';
 import { createI18n } from './ui/i18n.js';
 import { createMissionPanel } from './ui/panels/mission-panel.js';
 import { createRoutePanel } from './ui/panels/route-panel.js';
@@ -37,18 +44,26 @@ async function main() {
   const viewToggle = document.getElementById('view-toggle');
   let globe = null, globeView = null, store = null, pendingLocal = false;
   const goLocal = () => { if (store) store.set({ view: 'local' }); else pendingLocal = true; };
-  if (new URLSearchParams(location.search).get('view') !== 'local' && isWebGL2Supported()) {
+  const openLocal = new URLSearchParams(location.search).get('view') === 'local';
+  const flatDust = new URLSearchParams(location.search).get('dust') === 'flat';
+  const openDust = new URLSearchParams(location.search).get('layer') === 'dust';
+  if (!openLocal) {
     try {
       const meta = await fetch('assets/globe/globe.json').then((r) => { if (!r.ok) throw new Error(`globe.json: HTTP ${r.status}`); return r.json(); });
+      const webgl = isWebGL2Supported();
       globeRoot.hidden = false;
       loading.hidden = true; // the globe shows its own progress while the EVA data loads underneath
-      globeView = createGlobeView(globeRoot, { i18n, assetBase: 'assets/globe/', meta, onEnterMission: goLocal });
-      globe = createWebGLGlobe(globeView.canvas, { assetBase: 'assets/globe/', meta, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches });
-      globe.start().then(() => globeView.attach(globe)).catch((err) => {
-        console.error(err);
-        globeView.fail('globe.error');
-        setTimeout(goLocal, 1500); // fallback: the EVA map always works without the globe
-      });
+      globeView = createGlobeView(globeRoot, { i18n, assetBase: 'assets/globe/', dustBase: 'data/dust/', meta, onEnterMission: goLocal, preferFlat: flatDust || !webgl });
+      if (webgl) {
+        globe = createWebGLGlobe(globeView.canvas, { assetBase: 'assets/globe/', meta, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches });
+        globe.start().then(() => {
+          globeView.attach(globe);
+          if (openDust && !flatDust) globeView.showDustLayer();
+        }).catch((err) => {
+          console.error(err);
+          globeView.useFlat(); // the dust map still works as a flat Leaflet view
+        });
+      }
     } catch (err) {
       console.error(err);
       globeRoot.hidden = true; globe = null; globeView = null; loading.hidden = false;
@@ -69,13 +84,81 @@ async function main() {
   }
 
   const map = createLeafletMapView(document.getElementById('map'), { data, assetUrl: repository.assetUrl });
-  const planOptions = service.defaultPlanOptions();
+  const terrainGrid = new TerrainGrid(data.terrainMeta, await repository.loadTerrainBinary());
+  const roughColors = ['#1c2430', '#2f6f8f', '#e0b043', '#d36a2c', '#f4efe6'];
+  const roughStops = [0, 0.05, 0.15, 0.4, 1];
+  for (const scale of ROUGHNESS_SCALES) {
+    const mad = meanAbsoluteDeviation(terrainGrid.z, terrainGrid.rows, terrainGrid.cols, scale.radius);
+    const rgba = new Uint8ClampedArray(mad.length * 4);
+    for (let i = 0; i < mad.length; i++) {
+      if (!Number.isFinite(mad[i])) continue;
+      const rgb = rampColor(roughStops, roughColors, mad[i]);
+      rgba[i * 4] = rgb[0]; rgba[i * 4 + 1] = rgb[1]; rgba[i * 4 + 2] = rgb[2]; rgba[i * 4 + 3] = 210;
+    }
+    map.setRaster(scale.id, `layer.${scale.id}`, rgba, terrainGrid.cols, terrainGrid.rows, 0.75);
+  }
+  const sun0 = data.params.sun;
+  const paintShadows = (ls, hour) => {
+    const lat = (terrainGrid.bounds.south + terrainGrid.bounds.north) / 2;
+    const sun = solarPosition(lat, ls, hour, sun0.obliquityDeg);
+    const mask = shadowMask(terrainGrid.z, terrainGrid.rows, terrainGrid.cols, terrainGrid.res, terrainGrid.cosLat, sun, sun0.marchM);
+    const rgba = new Uint8ClampedArray(mask.length * 4);
+    for (let i = 0; i < mask.length; i++) if (mask[i]) { rgba[i * 4 + 3] = 150; }
+    map.setRaster('shadow', 'layer.shadow', rgba, terrainGrid.cols, terrainGrid.rows, 0.85);
+  };
+  paintShadows(sun0.defaultLs, sun0.defaultLtst);
+  const habitat = data.site.points.landing;
+  const habitatCell = terrainGrid.cellOf(habitat.lon, habitat.lat);
+  const vis = data.params.visibility;
+  const losMask = habitatCell >= 0
+    ? viewshedMask(terrainGrid.z, terrainGrid.rows, terrainGrid.cols, terrainGrid.res, terrainGrid.cosLat, habitatCell, vis.habitatHeightM, vis.crewEyeHeightM)
+    : new Uint8Array(terrainGrid.size);
+  const losRgba = new Uint8ClampedArray(losMask.length * 4);
+  for (let i = 0; i < losMask.length; i++) {
+    if (!Number.isFinite(terrainGrid.z[i])) continue;
+    if (losMask[i]) { losRgba[i * 4 + 1] = 160; losRgba[i * 4 + 3] = 70; }
+    else { losRgba[i * 4] = 180; losRgba[i * 4 + 3] = 110; }
+  }
+  map.setRaster('los', 'layer.los', losRgba, terrainGrid.cols, terrainGrid.rows, 0.8);
+  const walkModel = buildCostModel(terrainGrid, data.params);
+  const walkBudgetS = Math.max(0, data.params.eva.limitMin - data.params.eva.airlockMin - data.params.eva.reserveMin) * 60;
+  const reach = habitatCell >= 0 ? reachabilityMask(walkModel, habitatCell, walkBudgetS) : new Uint8Array(terrainGrid.size);
+  const reachRgba = new Uint8ClampedArray(reach.length * 4);
+  for (let i = 0; i < reach.length; i++) if (reach[i]) { reachRgba[i * 4 + 2] = 210; reachRgba[i * 4 + 3] = 90; }
+  map.setRaster('reach', 'layer.reach', reachRgba, terrainGrid.cols, terrainGrid.rows, 0.85);
+  const thermal = await fetch('data/sites/jezero-issole/thermal-inertia.json').then((r) => r.json());
+  const thermalRgba = new Uint8ClampedArray(thermal.width * thermal.height * 4);
+  const tiStops = [200, 220, 240, 260, 280];
+  const tiColors = ['#243044', '#2f6f8f', '#7eaa45', '#e0b043', '#d36a2c'];
+  thermal.values.flat().forEach((value, i) => {
+    const rgb = rampColor(tiStops, tiColors, value);
+    thermalRgba[i * 4] = rgb[0]; thermalRgba[i * 4 + 1] = rgb[1]; thermalRgba[i * 4 + 2] = rgb[2]; thermalRgba[i * 4 + 3] = 210;
+  });
+  map.setRaster('thermal', 'layer.thermal', thermalRgba, thermal.width, thermal.height, 0.8, thermal.bounds);
+  const paintCorridor = (a, b) => {
+    const ca = terrainGrid.cellOf(a.lon, a.lat), cb = terrainGrid.cellOf(b.lon, b.lat);
+    const masks = ca >= 0 && cb >= 0 ? corridorMasks(walkModel, ca, cb, [0.05, 0.1]) : [new Uint8Array(terrainGrid.size), new Uint8Array(terrainGrid.size)];
+    const colors = [[230, 190, 40, 80], [230, 120, 30, 120]];
+    ['corridor10', 'corridor5'].forEach((key, k) => {
+      const rgba = new Uint8ClampedArray(masks[k === 0 ? 1 : 0].length * 4);
+      const mask = masks[k === 0 ? 1 : 0];
+      for (let i = 0; i < mask.length; i++) if (mask[i]) {
+        rgba[i * 4] = colors[k][0]; rgba[i * 4 + 1] = colors[k][1]; rgba[i * 4 + 2] = colors[k][2]; rgba[i * 4 + 3] = colors[k][3];
+      }
+      map.setRaster(key, k === 0 ? 'layer.corridor10' : 'layer.corridor5', rgba, terrainGrid.cols, terrainGrid.rows, 0.9);
+    });
+  };
+  const firstPlan = service.evaluate(service.defaultPlanOptions());
   store = createStore({
     view: globeView && !pendingLocal ? 'globe' : 'local',
     officialRes: data.routes.primaryResM,
     pick: null, pointA: null, pointB: null,
     routeStatus: { kind: 'idle' }, userRoute: null,
-    paceKey: 'normal', planOptions, ...service.evaluate(planOptions),
+    paceKey: 'normal', planOptions: firstPlan.evaluation.options, dustInfo: firstPlan.dustInfo,
+    sun: { ls: data.params.sun.defaultLs, hour: data.params.sun.defaultLtst },
+    losRequired: false,
+    routeColor: 'budget',
+    evaluation: firstPlan.evaluation, explanation: firstPlan.explanation,
     sensitivity: { status: 'idle', rows: null }, sensitivityView: null, traverseValidation: null, routingReady: false,
   });
 
@@ -93,7 +176,7 @@ async function main() {
     const { pointA, pointB } = store.get();
     if (!pointA || !pointB) return;
     store.set({ routeStatus: { kind: 'computing' }, userRoute: null });
-    const settled = await settleRoute(routes, id, () => service.computeRoute(pointA, pointB));
+    const settled = await settleRoute(routes, id, () => service.computeRoute(pointA, pointB, store.get().losRequired ? { requireLineOfSight: true, mask: losMask } : undefined));
     if (settled.stale) return;
     if (settled.error) console.error(settled.error);
     store.set({ routeStatus: settled.status, userRoute: settled.userRoute });
@@ -109,8 +192,18 @@ async function main() {
       computeIfReady();
     },
     setOption: (patch) => {
-      const planOptionsNext = { ...store.get().planOptions, ...patch };
-      store.set({ planOptions: planOptionsNext, ...service.evaluate(planOptionsNext), sensitivityView: sensitivityView(store.get().sensitivity.rows, planOptionsNext) });
+      const prev = store.get().planOptions;
+      const next = { ...prev, ...patch };
+      if (patch.dustFollowData) next.dustAlertOverride = null;
+      else if (Object.hasOwn(patch, 'dustStormAlert') && !Object.hasOwn(patch, 'dustAlertOverride')) next.dustAlertOverride = patch.dustStormAlert;
+      if (Object.hasOwn(patch, 'weatherScenario') || Object.hasOwn(patch, 'dustSol')) next.dustAlertOverride = null;
+      delete next.dustFollowData;
+      const result = service.evaluate(next);
+      store.set({
+        planOptions: result.evaluation.options, dustInfo: result.dustInfo,
+        evaluation: result.evaluation, explanation: result.explanation,
+        sensitivityView: sensitivityView(store.get().sensitivity.rows, result.evaluation.options),
+      });
     },
     runSensitivity: async () => {
       if (store.get().sensitivity.status === 'running') return;
@@ -122,6 +215,17 @@ async function main() {
         console.error(err);
         store.set({ sensitivity: { status: 'error', rows: null } });
       }
+    },
+    setRouteColor: (routeColor) => store.set({ routeColor }),
+    setLosRequired: (losRequired) => {
+      store.set({ losRequired });
+      computeIfReady();
+    },
+    setSun: ({ ls, hour }) => {
+      const prev = store.get().sun;
+      const next = { ls: Number.isFinite(ls) ? ls : prev.ls, hour: Number.isFinite(hour) ? hour : prev.hour };
+      paintShadows(next.ls, next.hour);
+      store.set({ sun: next });
     },
     setPace: (key) => {
       store.set({ paceKey: key });
@@ -184,7 +288,10 @@ async function main() {
     if (s.officialRes !== last.officialRes) map.showOfficial(s.officialRes);
     if (s.pointA !== last.pointA) map.setPoint('A', s.pointA);
     if (s.pointB !== last.pointB) map.setPoint('B', s.pointB);
-    if (s.userRoute !== last.userRoute) map.showUserRoute(s.userRoute?.coords ?? null);
+    if (s.userRoute !== last.userRoute || s.routeColor !== last.routeColor || s.planOptions?.limitMin !== last.planOptions?.limitMin) {
+      map.showUserRoute(s.userRoute, { mode: s.routeColor || 'budget', limitMin: s.planOptions.limitMin });
+      if (s.userRoute && s.pointA && s.pointB) paintCorridor(s.pointA, s.pointB);
+    }
     map.setPickCursor(Boolean(s.pick));
     last = s;
   });

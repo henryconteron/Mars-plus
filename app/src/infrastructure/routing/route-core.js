@@ -22,10 +22,16 @@ export function createRouteCore() {
   return {
     init(meta, buffer, params) { grid = new TerrainGrid(meta, buffer); model = buildCostModel(grid, params); },
 
-    route(a, b) {
+    route(a, b, options) {
       if (!model) return { ok: false, code: 'notReady' };
       const t0 = performance.now();
-      const r = routeOn(model, a, b);
+      let m = model;
+      if (options?.requireLineOfSight && options.mask) {
+        const blocked = new Uint8Array(model.blocked);
+        for (let i = 0; i < blocked.length; i++) if (!options.mask[i]) blocked[i] = 1;
+        m = { ...model, blocked };
+      }
+      const r = routeOn(m, a, b);
       return r.ok ? { ...r, ms: Math.round(performance.now() - t0) } : r;
     },
 

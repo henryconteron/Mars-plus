@@ -27,6 +27,17 @@ export function renderElevationProfile(svg, series, title) {
   for (const v of [z0, (z0 + z1) / 2, z1]) svg.append(s('text', { x: m.l - 4, y: Y(v) + 3, 'text-anchor': 'end' }, v.toFixed(0)));
   for (const v of [0, dmax / 2, dmax]) svg.append(s('text', { x: X(v), y: H - 6, 'text-anchor': 'middle' }, `${v.toFixed(0)} m`));
   for (const p of prepared) {
-    svg.append(s('polyline', { fill: 'none', stroke: p.color, 'stroke-width': 1.6, 'stroke-dasharray': p.dash ?? null, points: p.d.map((v, i) => `${X(v).toFixed(1)},${Y(p.z[i]).toFixed(1)}`).join(' ') }));
+    if (p.grades && p.steepDeg) {
+      for (let i = 1; i < p.d.length; i++) {
+        const steep = p.grades[i - 1] >= p.steepDeg;
+        svg.append(s('line', {
+          x1: X(p.d[i - 1]).toFixed(1), y1: Y(p.z[i - 1]).toFixed(1),
+          x2: X(p.d[i]).toFixed(1), y2: Y(p.z[i]).toFixed(1),
+          stroke: steep ? '#e0703a' : p.color, 'stroke-width': steep ? 2.4 : 1.6,
+        }));
+      }
+    } else {
+      svg.append(s('polyline', { fill: 'none', stroke: p.color, 'stroke-width': 1.6, 'stroke-dasharray': p.dash ?? null, points: p.d.map((v, i) => `${X(v).toFixed(1)},${Y(p.z[i]).toFixed(1)}`).join(' ') }));
+    }
   }
 }

@@ -47,7 +47,10 @@ export function timeFilter(ctx) {
  *  Dose uses a shorter interval; see radiationFilter. */
 export function weatherFilter(ctx) {
   const o = ctx.options;
-  if (o.dustStormAlert) return { code: 'dustStorm', values: {} };
+  if (o.dustStormAlert) {
+    const values = Number.isFinite(o.dustTau) ? { tau: o.dustTau, threshold: o.dustThreshold } : {};
+    return { code: 'dustStorm', values };
+  }
   return checkWeatherWindow(ctx.weather, o.weatherScenario, ctx.departure, ctx.totalMin, o);
 }
 

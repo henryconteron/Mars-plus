@@ -19,7 +19,13 @@
 .globe-view .g-status { position: absolute; inset: 50% auto auto 50%; translate: -50% -50%; margin: 0; width: min(25rem, 80%); text-align: center; pointer-events: none; text-shadow: 0 1px 4px #000; }
 .globe-view .g-status[hidden] { display: none; }
 .globe-view .g-center { display: none; position: absolute; inset: 50% auto auto 50%; translate: -50% -50%; width: .49rem; aspect-ratio: 1; border: 1px solid #fff; border-radius: 50%; box-shadow: 0 0 .2rem #000; pointer-events: none; }
-.globe-view .g-stage:is([data-layer="mola"], [data-layer="geology"]) .g-center { display: block; }
+.globe-view .g-stage:is([data-layer="mola"], [data-layer="geology"], [data-layer="dust"]) .g-center { display: block; }
+.globe-view .g-flat { position: absolute; inset: 0; width: auto; height: auto; background: #140e0c; z-index: 0; }
+.globe-view .g-flat.leaflet-container { background: #140e0c; font: inherit; }
+.globe-view .g-canvas[hidden], .globe-view .g-flat[hidden] { display: none; }
+.globe-view .g-dust-field, .globe-view .g-dust-ls { display: flex; justify-content: space-between; gap: .6rem; align-items: center; }
+.globe-view .g-dust-field select, .globe-view .g-dust-field input, .globe-view .g-legend input[type="range"] { width: 100%; }
+.globe-view .g-flat-toggle { margin-top: .55rem; }
 .globe-view .g-stage[data-loading-layer] .g-canvas { opacity: .35; }
 
 /* Mission call-to-action */
@@ -67,7 +73,7 @@
 .globe-view .g-destinations button { width: 100%; display: grid; gap: .12rem; padding: .5rem .42rem; text-align: left; border: 0; border-radius: .42rem; background: transparent; color: var(--g-paper); cursor: pointer; }
 .globe-view .g-destinations button small { color: var(--g-sand); font-size: .75rem; }
 .globe-view .g-destinations button:is(:hover, [aria-pressed="true"]) { color: var(--g-peach); background: var(--g-hover); }
-.globe-view .g-layer-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .3rem; }
+.globe-view .g-layer-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .3rem; }
 .globe-view .g-layer-options label { position: relative; cursor: pointer; }
 .globe-view .g-layer-options input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .globe-view .g-layer-options span { display: grid; align-content: center; gap: .15rem; min-height: 3.1rem; padding: .45rem .5rem; border-radius: .48rem; font-size: .85rem; border: 1px solid var(--g-line); }

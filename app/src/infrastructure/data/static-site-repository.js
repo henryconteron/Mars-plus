@@ -11,7 +11,7 @@ export function createStaticSiteRepository(baseUrl, siteId) {
   };
   return {
     async loadSite() {
-      const [params, site, routes, stops, geology, weather, radiation, overlays, terrainMeta] = await Promise.all([
+      const [params, site, routes, stops, geology, weather, radiation, overlays, terrainMeta, dust] = await Promise.all([
         getJson(`${baseUrl}model-parameters.json`),
         getJson(`${siteUrl}site.json`),
         getJson(`${siteUrl}routes.json`),
@@ -21,8 +21,9 @@ export function createStaticSiteRepository(baseUrl, siteId) {
         getJson(`${siteUrl}radiation-oct2021.json`),
         getJson(`${siteUrl}overlays.json`),
         getJson(`${siteUrl}terrain-2m.json`),
+        getJson(`${baseUrl}dust/catalog.json`),
       ]);
-      return { params, site, routes, stops, geology, weather, radiation, overlays, terrainMeta };
+      return { params, site, routes, stops, geology, weather, radiation, overlays, terrainMeta, dust };
     },
     async loadTerrainBinary() {
       const r = await fetch(`${siteUrl}terrain-2m.bin`);
