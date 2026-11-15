@@ -95,10 +95,12 @@ export function createLeafletMapView(container, { data, assetUrl }) {
       lastT = t;
       container.setAttribute('aria-label', t('map.label'));
       refreshNotice();
+      const w = data.params.workspace;
+      const ws = { slope: w.maxSlopeDeg, dune: w.maxLargeDuneFraction };
       markers.landing.bindPopup(t('point.landing'));
       markers.issole.bindPopup(t('point.issole') + photoOf('observation'));
-      markers.sampling.bindPopup(t('point.sampling') + photoOf('sampling'));
-      markers.observation.bindPopup(t('point.observation') + photoOf('observation'));
+      markers.sampling.bindPopup(t('point.sampling', ws) + photoOf('sampling'));
+      markers.observation.bindPopup(t('point.observation', ws) + photoOf('observation'));
       if (control) control.remove();
       control = L.control.layers(
         { [t('layer.hirise')]: base.hirise, [t('layer.ctx')]: base.ctx, [t('layer.themis')]: base.themis },

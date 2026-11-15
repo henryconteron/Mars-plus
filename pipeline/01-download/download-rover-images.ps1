@@ -22,7 +22,7 @@ foreach ($sol in $src.roverImagesSols[0]..$src.roverImagesSols[1]) {
     $page++
   } while (@($resp.images).Count -eq 100 -and $page -lt 30)
 }
-$index | Export-Csv (Join-Path $out 'rover-images-index.csv') -NoTypeInformation -Encoding UTF8
+Export-CsvUtf8NoBom $index (Join-Path $out 'rover-images-index.csv')
 
 $quota = @{ NAVCAM_LEFT = 4; MCZ_LEFT = 4; FRONT_HAZCAM_LEFT_A = 1; SHERLOC_WATSON = 3; PIXL_MCC = 1 }
 $new = 0

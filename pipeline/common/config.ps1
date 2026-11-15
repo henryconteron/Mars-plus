@@ -18,6 +18,19 @@ function Resolve-RepoPath([string]$repoRoot, [string]$relative) { Join-Path $rep
 
 function Write-Step([string]$text) { Write-Host ("[{0:HH:mm:ss}] {1}" -f (Get-Date), $text) }
 
+# Windows PowerShell 5.1 writes a UTF-8 BOM from its utf8 encoding name and from parameterless File.WriteAllText.
+# JSON consumers and the test suite expect BOM-free UTF-8. A leading U+FEFF in the string is stripped.
+function Write-Utf8NoBom([string]$path, [string]$text) {
+  if ($text.Length -gt 0 -and [int]$text[0] -eq 0xFEFF) { $text = $text.Substring(1) }
+  $utf8 = New-Object System.Text.UTF8Encoding $false
+  [System.IO.File]::WriteAllText($path, $text, $utf8)
+}
+
+function Export-CsvUtf8NoBom($rows, [string]$path) {
+  $lines = @($rows | ConvertTo-Csv -NoTypeInformation)
+  Write-Utf8NoBom $path (($lines -join "`r`n") + "`r`n")
+}
+
 # Loads a C# file from pipeline/ once per PowerShell session.
 function Use-CSharp([string]$relativeFile, [string]$typeName, [string[]]$references = @()) {
   if (-not ([System.Management.Automation.PSTypeName]$typeName).Type) {

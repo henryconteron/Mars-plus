@@ -46,7 +46,7 @@ export function createRadiationPanel(el, { i18n, data }) {
   function update(state) {
     const rec = state.evaluation?.recommended;
     evaLine.textContent = rec
-      ? i18n.t('radiation.eva', { dose: fmt(rec.doseUGy, 0), share: fmt(shareOfSol(rec.totalMin) * 100, 0) })
+      ? i18n.t('radiation.eva', { dose: fmt(rec.doseUGy, 0), outsideMin: fmt(rec.outsideMin, 0), share: fmt(shareOfSol(rec.outsideMin) * 100, 0) })
       : i18n.t('radiation.noEva');
   }
   return { build, update };

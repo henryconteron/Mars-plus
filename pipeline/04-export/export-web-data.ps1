@@ -18,6 +18,8 @@ $inv = [Globalization.CultureInfo]::InvariantCulture
 [RouteEngine]::SmallDuneExtra = [double]$mp.terrain.smallDuneExtra
 [RouteEngine]::RockMult = [double]$mp.terrain.rockMult
 [RouteEngine]::RockBlock = [double]$mp.terrain.rockBlockFraction
+[RouteEngine]::WorkspaceMaxSlopeDeg = [double]$mp.workspace.maxSlopeDeg
+[RouteEngine]::WorkspaceMaxLargeDune = [double]$mp.workspace.maxLargeDuneFraction
 $marsR = [double]$site.marsRadiusM
 
 $outDir = Join-Path $repo ("app\data\sites\" + $site.id)
@@ -70,8 +72,8 @@ $traj = Get-Content (Resolve-RepoPath $repo $raw.trajectory) -Raw | ConvertFrom-
 $roverFeature = $traj.features | Where-Object { $_.properties.id -eq 'rover-traverse' } | Select-Object -First 1
 $roverCoords = ($roverFeature.geometry.coordinates | ForEach-Object { [string]::Format($inv, '[{0:F7},{1:F7}]', [double]$_[0], [double]$_[1]) }) -join ','
 $routesJson = '{"paramsVersion":"' + $mp.version + '","primaryResM":2,"runs":[' + ($runs -join ',') + '],"roverPath":{"label":"' + $roverFeature.properties.label + '","distanceM":' + ([double]$roverFeature.properties.distanceM).ToString('0.0', $inv) + ',"coords":[' + $roverCoords + ']}}'
-[IO.File]::WriteAllText((Join-Path $outDir 'routes.json'), $routesJson)
-[IO.File]::WriteAllText((Join-Path $outDir 'stops.json'), $stopsJson)
+Write-Utf8NoBom (Join-Path $outDir 'routes.json') $routesJson
+Write-Utf8NoBom (Join-Path $outDir 'stops.json') $stopsJson
 
 # --- terrain grid for the browser (2 m) ---
 Write-Step 'Terrain grid 2 m'
@@ -95,7 +97,7 @@ $terrainMeta = [ordered]@{
     [ordered]@{ name = 'rock'; type = 'uint8'; offset = 6 * $cellCount; scale = (1.0 / 255); add = 0; unit = 'fraction' }
   )
 }
-$terrainMeta | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $outDir 'terrain-2m.json') -Encoding UTF8
+Write-Utf8NoBom (Join-Path $outDir 'terrain-2m.json') ($terrainMeta | ConvertTo-Json -Depth 5)
 
 # --- overlays ---
 Write-Step 'Overlays'
@@ -110,7 +112,7 @@ $overlays = [ordered]@{
   slope = [ordered]@{ file = 'overlays/slope-2m.png'; bounds = [ordered]@{ west = $west; south = $south; east = $east; north = $north } }
   baseOrtho = [ordered]@{ file = 'overlays/base-ortho-2m.png'; bounds = [ordered]@{ west = $oWest; south = $oNorth - $oH * $deg; east = $oWest + $oW * $deg; north = $oNorth } }
 }
-$overlays | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $outDir 'overlays.json') -Encoding UTF8
+Write-Utf8NoBom (Join-Path $outDir 'overlays.json') ($overlays | ConvertTo-Json -Depth 4)
 
 # --- geology (Stack et al. 2020) ---
 Write-Step 'Geology'
@@ -121,7 +123,7 @@ $geoFeatures = foreach ($f in $geoIn.features) {
   $ring = ($f.geometry.coordinates[0] | ForEach-Object { [string]::Format($inv, '[{0:F7},{1:F7}]', [double]$_[0], [double]$_[1]) }) -join ','
   '{"type":"Feature","properties":{"class":"' + $cls + '","surface":"' + $surf + '","bedrock":"' + $bed + '"},"geometry":{"type":"Polygon","coordinates":[[' + $ring + ']]}}'
 }
-[IO.File]::WriteAllText((Join-Path $outDir 'geology.geojson'), '{"type":"FeatureCollection","source":"Stack et al. 2020, Space Sci. Rev. (Mars 2020 Science Team photogeologic map)","features":[' + ($geoFeatures -join ',') + ']}')
+Write-Utf8NoBom (Join-Path $outDir 'geology.geojson') ('{"type":"FeatureCollection","source":"Stack et al. 2020, Space Sci. Rev. (Mars 2020 Science Team photogeologic map)","features":[' + ($geoFeatures -join ',') + ']}')
 
 # --- weather (MEDA) ---
 Write-Step 'Weather'
@@ -130,7 +132,7 @@ $med = Import-Csv (Resolve-RepoPath $repo $raw.weatherTypical)
 $hours = foreach ($r in $med) {
   '{"h":' + [int]$r.hour + ',"typical":{"tempC":' + (NumOrNull $r.typical_temp_c) + ',"windMs":' + (NumOrNull $r.typical_wind_ms) + '},"worst":{"tempC":' + (NumOrNull $r.worst_temp_c) + ',"windMs":' + (NumOrNull $r.worst_wind_ms) + '},"storm":{"tempC":' + (NumOrNull $r.storm_temp_c) + ',"windMs":' + (NumOrNull $r.storm_wind_ms) + '},"gustMaxMs":' + (NumOrNull $r.gust_max_ms) + ',"sols":' + [int]$r.sols + '}'
 }
-[IO.File]::WriteAllText((Join-Path $outDir 'weather-issole.json'), '{"site":"Issole","sols":"286-339 (typical/worst exclude the dust storm, sols 313-317)","source":"MEDA derived TIRS/WS, NASA PDS Atmospheres (DOI 10.17189/1522849)","note":"Ground temperature from TIRS upward LW irradiance, emissivity 0.99. Hours are local true solar time (LTST).","hours":[' + ($hours -join ',') + ']}')
+Write-Utf8NoBom (Join-Path $outDir 'weather-issole.json') ('{"site":"Issole","sols":"286-339 (typical/worst exclude the dust storm, sols 313-317)","source":"MEDA derived TIRS/WS, NASA PDS Atmospheres (DOI 10.17189/1522849)","note":"Ground temperature from TIRS upward LW irradiance, emissivity 0.99. Hours are local true solar time (LTST).","hours":[' + ($hours -join ',') + ']}')
 
 # --- radiation (RAD, detector E) ---
 Write-Step 'Radiation'
@@ -142,7 +144,7 @@ $series = ($radRows | ForEach-Object { '["' + $_.utc + '",' + ([double]$_.dose_E
 $radJson = '{"source":"MSL RAD RDR, NASA PDS PPI (detector E), Gale crater","unit":"uGy/h (absorbed dose)","backgroundUGyH":' + $bg.Average.ToString('0.00', $inv) +
   ',"event":{"label":"Solar particle event of 28 Oct 2021 (first ground-level event seen on Earth, Moon and Mars)","days":["2021-301","2021-302"],"meanUGyH":' + $ev.Average.ToString('0.00', $inv) + ',"maxUGyH":' + $ev.Maximum.ToString('0.00', $inv) +
   '},"note":"Reference rate from Gale crater; Jezero is higher (less atmosphere above), so local dose would be somewhat larger.","series":[' + $series + ']}'
-[IO.File]::WriteAllText((Join-Path $outDir 'radiation-oct2021.json'), $radJson)
+Write-Utf8NoBom (Join-Path $outDir 'radiation-oct2021.json') $radJson
 
 # --- rover photos for the stops (selected in config/site.*.json, credited NASA/JPL-Caltech) ---
 Write-Step 'Rover photos'
@@ -174,6 +176,6 @@ $entries = foreach ($f in $files) {
   $src = if ($sources.ContainsKey($rel)) { $sources[$rel] } else { 'Derived by MARS+ pipeline' }
   [ordered]@{ file = $rel; bytes = $f.Length; sha256 = (Get-FileHash $f.FullName -Algorithm SHA256).Hash.ToLowerInvariant(); source = $src }
 }
-[ordered]@{ site = $site.id; generated = (Get-Date).ToString('s'); paramsVersion = $mp.version; files = @($entries) } | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $outDir 'manifest.json') -Encoding UTF8
+Write-Utf8NoBom (Join-Path $outDir 'manifest.json') ([ordered]@{ site = $site.id; generated = (Get-Date).ToString('s'); paramsVersion = $mp.version; files = @($entries) } | ConvertTo-Json -Depth 4)
 $total = ($files | Measure-Object Length -Sum).Sum
 Write-Step ("Done: {0} files, {1:N2} MB in {2}" -f $files.Count, ($total / 1MB), $outDir)

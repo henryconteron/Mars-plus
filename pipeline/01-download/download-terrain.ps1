@@ -15,8 +15,7 @@ $orthoMetaPath = $orthoBin -replace 'uint8\.bin$', 'meta.json'
 New-Item -ItemType Directory -Force (Split-Path $dtmBin), (Split-Path $orthoBin) | Out-Null
 
 function Save-Meta($path, $url, $info, $r0, $c0, $nr, $nc) {
-  [ordered]@{ source = $url; resM = $info.ScaleX; rows = $nr; cols = $nc; originXM = $info.TieX + $c0 * $info.ScaleX; originYM = $info.TieY - $r0 * $info.ScaleY; marsRadiusM = $marsR; projection = $site.projection } |
-    ConvertTo-Json | Set-Content $path -Encoding UTF8
+  Write-Utf8NoBom $path ([ordered]@{ source = $url; resM = $info.ScaleX; rows = $nr; cols = $nc; originXM = $info.TieX + $c0 * $info.ScaleX; originYM = $info.TieY - $r0 * $info.ScaleY; marsRadiusM = $marsR; projection = $site.projection } | ConvertTo-Json)
 }
 
 # --- DTM: window from the site bbox ---

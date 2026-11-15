@@ -24,6 +24,11 @@
       "rocks": "Shadow fraction in the 25 cm HiRISE orthoimage (shadow-based rock detection principle, Golombek et al.)"
     }
   },
+  "workspace": {
+    "maxSlopeDeg": 10,
+    "maxLargeDuneFraction": 0.5,
+    "source": "Suited work area next to the rover stops: slope <= 10 deg and large-dune fraction <= 0.5 (both inclusive), and no blocked cell. Scenario assumption, searched around the Robine and Malay rover positions."
+  },
   "sensitivity": {
     "largeDuneTimeFactors": [1.5, 2, 3],
     "source": "Walking-time multiplier on large aeolian bedforms tested around the model value (x2); the energy cost of walking on sand is 2.1-2.7x firm ground (Lejeune et al. 1998)"
@@ -56,6 +61,6 @@
   "radiation": {
     "detector": "E",
     "maxDoseUGyPerEva": 500,
-    "source": "MSL RAD dose rate (Gale crater), Oct 2021; Jezero is higher than Gale so local dose would be somewhat larger"
+    "source": "MSL RAD dose rate (Gale crater), Oct 2021; Jezero is higher than Gale so local dose would be somewhat larger. Nominal dose is the background rate times time on the surface (walking + tasks). Airlock time is inside the habitat and the reserve is unused margin, so neither counts as exposure."
   }
 }

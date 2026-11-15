@@ -33,7 +33,8 @@ export function createAssumptionsPanel(el, { i18n, data }) {
         html('assumptions.eva', { airlock: p.eva.airlockMin, reserve: p.eva.reserveMin, photo: p.tasks.photo.minutes, sample: p.tasks.sample.minutes }),
         html('assumptions.weather', { minC: p.weather.minGroundTempC, maxMs: p.weather.maxMeanWindMs }),
         html('assumptions.radiation', { rad: p.radiation.source }),
-        t('assumptions.stops'), t('assumptions.whole'),
+        html('assumptions.stops', { slope: p.workspace.maxSlopeDeg, dune: p.workspace.maxLargeDuneFraction }),
+        t('assumptions.whole'),
       ];
       el.append(h('h2', {}, t('assumptions.title')), h('ul', { class: 'list' }, ...items.map((x) => h('li', { html: x }))));
     },

@@ -1,4 +1,4 @@
-﻿# Motor v2: rutas y paradas con pendiente + arena (Stack 2020) + rocas (sombras HiRISE 25 cm).
+# Motor v2: rutas y paradas con pendiente + arena (Stack 2020) + rocas (sombras HiRISE 25 cm).
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $data = Join-Path $root 'data'

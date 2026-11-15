@@ -3,6 +3,7 @@
 
 import { planCatalog } from './tasks.js';
 import { FILTER_CHAIN } from './filters.js';
+import { minutesOutside } from '../radiation/dose.js';
 
 /**
  * @typedef {{limitMin:number, reserveMin:number, airlockMin:number, paceFactor:number,
@@ -10,7 +11,7 @@ import { FILTER_CHAIN } from './filters.js';
  *            minGroundTempC:number, maxMeanWindMs:number, maxDoseUGy:number, departureHours:number[]}} PlanOptions
  * @typedef {{planId:string, departure:number, status:'viable'|'rejected', filter:number|null,
  *            reason:{code:string,values:object}|null, travelMin?:number, workMin?:number, totalMin?:number,
- *            returnHour?:number, doseUGy?:number}} PlanResult
+ *            outsideMin?:number, returnHour?:number, doseUGy?:number}} PlanResult
  */
 
 /** Default options built from model parameters. */
@@ -44,6 +45,7 @@ function finalize(ctx, status, filter, reason) {
   const r = { planId: ctx.plan.id, departure: ctx.departure, status, filter, reason };
   if (ctx.totalMin > 0) {
     r.travelMin = ctx.travelMin; r.workMin = ctx.workMin; r.totalMin = ctx.totalMin;
+    r.outsideMin = minutesOutside(ctx.travelMin, ctx.workMin);
     r.returnHour = ctx.departure + ctx.totalMin / 60;
   }
   if (status === 'viable') r.doseUGy = ctx.doseUGy;

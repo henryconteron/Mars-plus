@@ -3,6 +3,8 @@
 // so terrain cells along it were passable. The share of those cells our model blocks is an upper bound
 // on false obstacles. (Waypoints are end-of-drive positions joined by straight lines: approximate track.)
 
+import { workspaceLimits } from '../terrain/workspace.js';
+
 const MARS_R = 3396190;
 const DEG = Math.PI / 180;
 
@@ -25,11 +27,12 @@ export function checkTraverse(model, coords) {
     }
   }
   let blockedCells = 0, rockBlocked = 0, slopeBlocked = 0, largeDuneCells = 0;
+  const duneLimit = workspaceLimits(params).maxLargeDuneFraction;
   for (const c of cells) {
     if (blocked[c]) blockedCells++;
     if (grid.rock[c] > params.terrain.rockBlockFraction) rockBlocked++;
     if (grid.slope[c] > params.terrain.slopeBlockDeg) slopeBlocked++;
-    if (grid.duneLarge[c] > 0.5) largeDuneCells++;
+    if (grid.duneLarge[c] > duneLimit) largeDuneCells++;
   }
   let areaBlocked = 0;
   for (let i = 0; i < grid.size; i++) if (blocked[i]) areaBlocked++;

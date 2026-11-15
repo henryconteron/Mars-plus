@@ -1,6 +1,7 @@
 // AI-assisted (Claude). Reviewed by the MARS+ team.
 // Composition root: builds adapters, wires use cases, mounts the UI.
 import { createStore } from './application/store.js';
+import { createRouteSession, settleRoute } from './application/route-session.js';
 import { createMissionService } from './application/use-cases.js';
 import { createStaticSiteRepository } from './infrastructure/data/static-site-repository.js';
 import { createWorkerRouteSolver } from './infrastructure/routing/worker-route-solver.js';
@@ -86,16 +87,23 @@ async function main() {
   }));
 
   // --- actions (the only place that mutates state) ---
+  const routes = createRouteSession();
   async function computeIfReady() {
+    const id = routes.begin();
     const { pointA, pointB } = store.get();
     if (!pointA || !pointB) return;
-    store.set({ routeStatus: { kind: 'computing' } });
-    const res = await service.computeRoute(pointA, pointB);
-    store.set(res.ok ? { routeStatus: { kind: 'done', ms: res.ms }, userRoute: res.stats } : { routeStatus: { kind: 'error', code: res.code === 'notReady' ? 'computing' : res.code }, userRoute: null });
+    store.set({ routeStatus: { kind: 'computing' }, userRoute: null });
+    const settled = await settleRoute(routes, id, () => service.computeRoute(pointA, pointB));
+    if (settled.stale) return;
+    if (settled.error) console.error(settled.error);
+    store.set({ routeStatus: settled.status, userRoute: settled.userRoute });
   }
   const actions = {
     pick: (which) => store.set((s) => ({ pick: s.pick === which ? null : which })),
-    clear: () => store.set({ pick: null, pointA: null, pointB: null, userRoute: null, routeStatus: { kind: 'idle' } }),
+    clear: () => {
+      routes.invalidate();
+      store.set({ pick: null, pointA: null, pointB: null, userRoute: null, routeStatus: { kind: 'idle' } });
+    },
     useMission: () => {
       store.set({ pick: null, pointA: { ...data.site.points.landing }, pointB: { lon: data.stops.sampling.lon, lat: data.stops.sampling.lat }, userRoute: null });
       computeIfReady();

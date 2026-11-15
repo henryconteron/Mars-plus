@@ -80,12 +80,13 @@ $bmp.Save((Join-Path $outDir 'mars-plus-logo-ai.png'), [Drawing.Imaging.ImageFor
 # --- metadata for the app ---
 # Middle dot built from its code point: PowerShell 5.1 reads BOM-less scripts as ANSI, which would garble a literal one.
 $dot = "$([char]0x00B7) "
-[ordered]@{
+$globeMeta = [ordered]@{
   viking = [ordered]@{ fast = 'viking-mdim21-2048.jpg'; full = 'viking-mdim21-full.jpg'; fullSize = @($fullW, $fullH); source = 'https://astrogeology.usgs.gov/search/map/mars_viking_colorized_global_mosaic_232m'; credit = 'NASA/JPL/USGS ' + $dot + 'Viking MDIM 2.1 via Mars Trek' }
   mola = [ordered]@{ file = 'mola-megdr-8ppd.i16.gz'; width = [int]$mola.width; height = [int]$mola.height; pixelsPerDegree = [int]$mola.pixelsPerDegree; source = 'https://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/'; credit = 'NASA Mars Global Surveyor ' + $dot + 'MOLA MEGDR (PDS)' }
   geology = [ordered]@{ file = 'geology-tanaka2014.u8.gz'; width = [int]$geo.width; height = [int]$geo.height; source = 'https://doi.org/10.3133/sim3292'; credit = 'Tanaka et al. 2014 ' + $dot + 'USGS SIM 3292 for NASA'; units = @($units) }
   sky = [ordered]@{ file = 'sky-nasa-svs.jpg'; source = 'https://svs.gsfc.nasa.gov/4851/'; credit = 'NASA Goddard SVS ' + $dot + 'ESA/Gaia/DPAC' }
   logo = [ordered]@{ file = 'mars-plus-logo-ai.png'; aiGenerated = $true; note = 'AI-generated image (watermarked)' }
   author = 'Globe renderer and data preparation: MARS+ team (AI-assisted); integrated into the app by Claude'
-} | ConvertTo-Json -Depth 6 | Set-Content (Join-Path $outDir 'globe.json') -Encoding UTF8
+}
+Write-Utf8NoBom (Join-Path $outDir 'globe.json') ($globeMeta | ConvertTo-Json -Depth 6)
 Get-ChildItem $outDir | ForEach-Object { Write-Step ("  {0,-28} {1,8:N0} KB" -f $_.Name, ($_.Length / 1KB)) }

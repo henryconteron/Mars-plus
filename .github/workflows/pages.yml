@@ -1,27 +1,42 @@
-# Publishes app/ to GitHub Pages on every push to main. No build step.
-# Enable it in the repo: Settings > Pages > Source: "GitHub Actions".
-name: Deploy app to GitHub Pages
+# Runs the full test suite on every pull request and on main, then publishes app/
+# to GitHub Pages only after those tests pass.
+# Enable Pages in the repo: Settings > Pages > Source: "GitHub Actions".
+name: Test and deploy
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run the full test suite
+        run: node tests/run.mjs
+
+  deploy:
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5

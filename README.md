@@ -62,7 +62,9 @@ powershell -ExecutionPolicy Bypass -File pipeline\run-pipeline.ps1
 # serve the repo
 powershell -ExecutionPolicy Bypass -File tools\dev-server.ps1
 # app:   http://localhost:8770/app/
-# tests: http://localhost:8770/tests/   (33 tests: domain, 6 plan scenarios, JS↔C# parity, validity, UI, globe)
+# tests in the browser: http://localhost:8770/tests/
+# same suite without Windows, from the repo root (this is what CI runs):
+node tests/run.mjs
 ```
 
 ## Deploy
@@ -76,7 +78,7 @@ powershell -ExecutionPolicy Bypass -File tools\dev-server.ps1
 - Walking speed: Tobler hiking function scaled ×0.5 (~2.5 km/h on flat ground) for a pressurized suit. This is a scenario assumption, not a measured value.
 - Sand doubles walking time (based on Lejeune et al. 1998, energy cost of walking on sand). About 520 m of large dunes surround Issole and cannot be avoided.
 - Rocks are detected from HiRISE shadows; rocks smaller than ~0.75 m are invisible from orbit.
-- Radiation rate comes from Gale crater (RAD). Jezero is higher, so the local dose would be somewhat larger.
+- Radiation rate comes from Gale crater (RAD). Jezero is higher, so the local dose would be somewhat larger. The nominal dose is that rate times time on the surface (walking and tasks). Airlock time is inside the habitat, and the reserve is unused margin, so neither is counted as exposure. The weather check still covers the whole budgeted window, including the reserve.
 - The dust storm is modeled as an explicit alert, because dust opacity is not in the derived MEDA files.
 - Stops are the flattest rock-free workspaces near the rover positions for Robine and Malay.
 
